@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZenPlan Pro - 全功能旗艦版</title>
+    <title>ZenPlan Pro - 專業報告增強版</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/dayjs@1/dayjs.min.js"></script>
@@ -11,166 +11,184 @@
     <style>
         [v-cloak] { display: none; }
         .diamond { transform: rotate(45deg); }
-        .transition-theme { transition: background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease, shadow 0.4s ease; }
+        .transition-theme { transition: background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease; }
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; color: black !important; }
+            .print-card { border: 1px solid #ccc !important; box-shadow: none !important; border-radius: 0 !important; }
+        }
         ::-webkit-scrollbar { height: 6px; width: 6px; }
         ::-webkit-scrollbar-thumb { background: rgba(100, 116, 139, 0.4); border-radius: 10px; }
-        .copy-toast { animation: fade-in-out 1.5s ease-in-out forwards; }
-        @keyframes fade-in-out {
-            0% { opacity: 0; transform: translateY(10px); }
-            20% { opacity: 1; transform: translateY(0); }
-            80% { opacity: 1; transform: translateY(0); }
-            100% { opacity: 0; transform: translateY(-10px); }
-        }
-        .deadline-pulse { animation: pulse-red 2s infinite; }
-        @keyframes pulse-red {
-            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5); }
-            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
-        }
     </style>
 </head>
-<body :class="[themeClasses.body, 'font-sans leading-relaxed transition-theme min-h-screen']">
-    <div id="app" v-cloak class="max-w-7xl mx-auto p-6 md:p-10">
+<body :class="[themeClasses.body, 'font-sans leading-relaxed transition-theme min-h-screen pb-20']">
+    <div id="app" v-cloak class="max-w-7xl mx-auto p-4 md:p-10">
         
-        <div v-if="showToast" class="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 bg-emerald-500 text-white px-8 py-3 rounded-full font-bold shadow-2xl copy-toast">
-            已複製路徑到剪貼簿！
-        </div>
-
-        <header :class="[themeClasses.card, 'flex flex-col md:flex-row justify-between items-center mb-10 p-8 rounded-[2.5rem] border shadow-2xl transition-theme']">
+        <header :class="[themeClasses.card, 'no-print flex flex-col md:flex-row justify-between items-center mb-10 p-8 rounded-[2rem] border shadow-2xl transition-theme']">
             <div>
                 <h1 :class="[themeClasses.brand, 'text-3xl font-black tracking-tight flex items-center']">
-                    <i class="fa-solid fa-layer-group mr-4"></i>ZenPlan Pro
+                    <i class="fa-solid fa-ghost mr-4 opacity-70"></i>ZenPlan Pro
                 </h1>
-                <p class="text-base opacity-50 font-medium mt-1">2026 年度主控台 · 旗艦功能全整合</p>
+                <p class="text-base opacity-50 font-medium mt-1">2026 計畫追蹤 · 報告模式</p>
             </div>
-            
-            <div class="flex flex-wrap gap-4 mt-6 md:mt-0 items-center">
-                <div class="flex bg-black/10 p-1.5 rounded-2xl border border-slate-500/10">
-                    <button @click="setTheme('dark')" :class="themeBtnClass(theme === 'dark')" title="深色模式"><i class="fa-solid fa-moon text-sm"></i></button>
-                    <button @click="setTheme('light')" :class="themeBtnClass(theme === 'light')" title="亮色模式"><i class="fa-solid fa-sun text-sm"></i></button>
-                    <button @click="setTheme('gray')" :class="themeBtnClass(theme === 'gray')" title="中性模式"><i class="fa-solid fa-ghost text-sm"></i></button>
+            <div class="flex flex-wrap gap-3 mt-4 md:mt-0">
+                <div class="flex bg-black/5 p-1 rounded-xl mr-2">
+                    <button v-for="t in ['gray','dark','light']" @click="setTheme(t)" :class="themeBtnClass(theme === t)">
+                        <i :class="['fa-solid', t === 'gray' ? 'fa-ghost' : t === 'dark' ? 'fa-moon' : 'fa-sun']"></i>
+                    </button>
                 </div>
-                <button @click="exportData" class="px-6 py-2.5 bg-slate-700 text-white rounded-xl text-sm font-bold hover:bg-slate-600 transition shadow-lg">匯出</button>
-                <label class="px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-bold cursor-pointer hover:bg-indigo-500 transition shadow-lg">
+                <button @click="exportData" class="px-4 py-2 bg-slate-600 text-white rounded-xl text-xs font-bold shadow-sm">備份</button>
+                <label class="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold cursor-pointer shadow-sm">
                     匯入 <input type="file" @change="importData" class="hidden" accept=".json">
                 </label>
             </div>
         </header>
 
-        <div :class="[themeClasses.tabBg, 'flex p-2 rounded-2xl w-fit mb-10 border transition-theme']">
-            <button @click="currentTab = 'time'" :class="tabClass(currentTab === 'time')">年度全覽軸</button>
-            <button @click="currentTab = 'project'" :class="tabClass(currentTab === 'project')">計畫詳情管理</button>
+        <div class="no-print flex p-2 rounded-2xl w-fit mb-10 border transition-theme" :class="themeClasses.tabBg">
+            <button @click="currentTab = 'time'" :class="tabClass(currentTab === 'time')">年度軸</button>
+            <button @click="currentTab = 'project'" :class="tabClass(currentTab === 'project')">計畫管理</button>
+            <button @click="currentTab = 'report'" :class="tabClass(currentTab === 'report')">執行報告</button>
         </div>
 
-        <div v-if="currentTab === 'time'" class="animate-in fade-in duration-500">
-            <section :class="[themeClasses.card, 'p-10 rounded-[3rem] shadow-2xl border transition-theme overflow-hidden']">
-                <div class="flex items-center justify-between mb-8">
-                    <h2 class="font-black text-2xl tracking-tight">2026 年度控制點全覽</h2>
-                    <div class="flex gap-6 text-xs font-bold uppercase tracking-widest opacity-60">
-                        <span class="flex items-center"><span class="w-3 h-3 rounded-full bg-indigo-500 mr-2"></span> 活動</span>
-                        <span class="flex items-center"><span class="w-3 h-3 diamond bg-red-500 mr-2 shadow-lg shadow-red-500/20"></span> DEADLINE</span>
-                    </div>
-                </div>
-                <div class="relative overflow-x-auto pb-6">
-                    <div class="min-w-[1200px] relative">
-                        <div class="flex border-b border-slate-500/10 mb-10 text-sm font-black opacity-30">
-                            <div v-for="m in 12" :key="m" class="flex-1 text-center py-4">{{m}}月</div>
-                        </div>
-                        <div v-for="p in projects" :key="p.id" class="relative h-20 border-b border-slate-500/5 flex items-center group">
-                            <div class="absolute -left-0 -top-2 text-[11px] font-black opacity-40 group-hover:text-indigo-500 group-hover:opacity-100 transition-all uppercase tracking-tighter">{{p.name}}</div>
-                            <div class="w-full h-1 bg-slate-500/10 rounded-full"></div>
-                            <div v-for="act in p.activities" :key="act.id" class="absolute top-1/2 -translate-y-1/2" :style="{ left: getYearPos(act.date) + '%' }">
-                                <div :class="['cursor-pointer transition-all hover:scale-[1.8] z-10 relative border-2', 
-                                              act.type === 'deadline' ? 'w-5 h-5 diamond bg-red-500 shadow-xl' : 'w-4 h-4 rounded-full bg-indigo-500 shadow-md',
-                                              act.done ? 'opacity-20 grayscale' : (act.type === 'deadline' ? 'deadline-pulse' : ''),
-                                              theme === 'light' ? 'border-white' : 'border-slate-800']" :title="act.name" @click="toggleDone(act)"></div>
-                            </div>
-                        </div>
-                        <div class="absolute top-0 bottom-0 w-0.5 bg-rose-500/40 z-20 pointer-events-none" :style="{ left: getYearPos(dayjs().format('YYYY-MM-DD')) + '%' }">
-                            <div class="bg-rose-500 text-white text-[10px] px-2 py-0.5 rounded-full absolute -top-8 -left-5 font-bold shadow-lg">TODAY</div>
+        <div v-if="currentTab === 'time'" class="animate-in fade-in duration-300">
+            <section :class="[themeClasses.card, 'p-10 rounded-[3rem] shadow-xl border overflow-hidden']">
+                <h2 class="font-black text-2xl mb-8">2026 年度控制點全覽</h2>
+                <div class="overflow-x-auto min-w-full">
+                    <div class="min-w-[1000px] space-y-4">
+                        <div class="flex opacity-30 text-xs font-bold border-b pb-4"><div v-for="m in 12" class="flex-1 text-center">{{m}}月</div></div>
+                        <div v-for="p in projects" :key="p.id" class="h-12 relative flex items-center border-b border-slate-500/5 group">
+                            <span class="absolute left-0 -top-1 text-[10px] font-bold opacity-30 group-hover:opacity-100">{{p.name}}</span>
+                            <div class="w-full h-0.5 bg-slate-500/10"></div>
+                            <div v-for="act in p.activities" class="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full" :class="act.type==='deadline'?'bg-rose-500 diamond':'bg-indigo-500'" :style="{left: getYearPos(act.date)+'%'}"></div>
                         </div>
                     </div>
                 </div>
-            </section>
+             </section>
         </div>
 
-        <div v-if="currentTab === 'project'" class="grid grid-cols-1 lg:grid-cols-4 gap-10 animate-in slide-in-from-left duration-500">
-            <div class="lg:col-span-1 space-y-4">
+        <div v-if="currentTab === 'project'" class="grid grid-cols-1 lg:grid-cols-4 gap-8 animate-in slide-in-from-left duration-500">
+            <div class="lg:col-span-1 space-y-3">
                 <div v-for="p in projects" :key="p.id" @click="selectedPid = p.id" :class="projectItemClass(p.id)">
-                    <div class="text-lg font-black truncate">{{ p.name }}</div>
-                    <div class="text-xs opacity-50 font-bold mt-1">{{ p.activities.length }} 個控制點</div>
+                    <div class="font-black truncate">{{ p.name }}</div>
                 </div>
-                <button @click="addProject" class="w-full py-6 border-4 border-dashed border-slate-500/20 rounded-[2rem] text-slate-500 hover:text-indigo-500 hover:border-indigo-500 transition-all font-black text-3xl">+</button>
+                <button @click="addProject" class="w-full py-4 border-2 border-dashed border-slate-500/20 rounded-2xl text-slate-400 hover:text-indigo-500">+</button>
             </div>
 
-            <div v-if="activeProject" :class="[themeClasses.card, 'lg:col-span-3 p-10 rounded-[3.5rem] shadow-2xl border transition-theme']">
-                <div class="mb-10 flex justify-between items-start gap-6 border-b border-slate-500/10 pb-6">
-                    <input v-model="activeProject.name" :class="[themeClasses.inputTitle, 'text-4xl font-black bg-transparent outline-none w-full transition-colors pb-2']">
-                    <button @click="deleteProject" class="text-slate-500 hover:text-rose-500 font-bold px-4 py-2 text-sm">刪除計畫</button>
+            <div v-if="activeProject" :class="[themeClasses.card, 'lg:col-span-3 p-10 rounded-[3rem] shadow-xl border']">
+                <div class="mb-8 border-b border-slate-500/10 pb-6">
+                    <label class="text-[10px] font-black opacity-40 uppercase">計畫名稱</label>
+                    <input v-model="activeProject.name" :class="[themeClasses.inputTitle, 'text-3xl font-black bg-transparent outline-none w-full']">
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-                    <div :class="[themeClasses.innerCard, 'p-8 rounded-[2rem] border transition-theme']">
-                        <div class="flex justify-between items-center mb-6">
-                            <h3 class="text-xs font-black opacity-50 uppercase tracking-widest"><i class="fa-solid fa-users mr-2 text-indigo-500"></i> 聯絡窗口</h3>
-                            <button @click="addContact" class="text-[11px] bg-black/10 px-3 py-1 rounded-lg hover:bg-black/20 font-bold">+ 新增</button>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div :class="[themeClasses.innerCard, 'p-6 rounded-2xl border']">
+                        <label class="text-[10px] font-black opacity-40 uppercase block mb-4">承辦單位 & 窗口</label>
+                        <input v-model="activeProject.org" placeholder="單位名稱" :class="[themeClasses.inputField, 'w-full mb-4 px-4 py-2 rounded-xl text-sm outline-none']">
+                        <div v-for="(contact, cIdx) in activeProject.contacts" :key="cIdx" class="flex gap-2 mb-2">
+                            <input v-model="contact.name" placeholder="姓名" :class="[themeClasses.inputField, 'w-1/3 px-3 py-1 rounded-lg text-xs outline-none']">
+                            <input v-model="contact.info" placeholder="聯繫資訊" :class="[themeClasses.inputField, 'w-2/3 px-3 py-1 rounded-lg text-xs outline-none']">
+                            <button @click="removeContact(cIdx)" class="text-rose-500 text-xs">×</button>
                         </div>
-                        <div class="space-y-4">
-                            <div v-for="(contact, cIdx) in activeProject.contacts" :key="cIdx" class="flex gap-2 group">
-                                <input v-model="contact.name" placeholder="姓名" :class="[themeClasses.inputField, 'w-1/3 rounded-xl px-4 py-2 text-xs outline-none']">
-                                <input v-model="contact.info" placeholder="聯繫資訊" :class="[themeClasses.inputField, 'w-2/3 rounded-xl px-4 py-2 text-xs outline-none']">
-                                <button @click="removeContact(cIdx)" class="text-slate-500 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all">×</button>
-                            </div>
-                        </div>
+                        <button @click="addContact" class="text-indigo-500 text-[10px] font-bold mt-2">+ 新增窗口</button>
                     </div>
 
-                    <div :class="[themeClasses.innerCard, 'p-8 rounded-[2rem] border transition-theme']">
-                        <div class="flex justify-between items-center mb-6">
-                            <h3 class="text-xs font-black opacity-50 uppercase tracking-widest"><i class="fa-solid fa-link mr-2 text-emerald-500"></i> 附件 / 本地路徑</h3>
-                            <button @click="addLink" class="text-[11px] bg-black/10 px-3 py-1 rounded-lg hover:bg-black/20 font-bold">+ 新增</button>
-                        </div>
-                        <div class="space-y-4">
-                            <div v-for="(link, lIdx) in activeProject.links" :key="lIdx" class="p-3 bg-black/5 rounded-2xl border border-slate-500/10">
-                                <div class="flex gap-2 mb-2">
-                                    <input v-model="link.title" placeholder="標籤" :class="[themeClasses.inputField, 'w-1/3 rounded-lg px-2 py-1 text-[10px] outline-none']">
-                                    <input v-model="link.url" placeholder="URL 或 C:\" :class="[themeClasses.inputField, 'w-2/3 rounded-lg px-2 py-1 text-[10px] outline-none']">
-                                    <button @click="removeLink(lIdx)" class="text-slate-500 hover:text-rose-500">×</button>
-                                </div>
-                                <div class="flex justify-end gap-3 px-1">
-                                    <a v-if="isUrl(link.url)" :href="link.url" target="_blank" class="text-[10px] font-black text-emerald-500 hover:opacity-70 flex items-center"><i class="fa-solid fa-external-link mr-1"></i> 開啟連結</a>
-                                    <button v-if="link.url && !isUrl(link.url)" @click="copyToClipboard(link.url)" class="text-[10px] font-black text-indigo-400 hover:opacity-70 flex items-center"><i class="fa-solid fa-copy mr-1"></i> 複製路徑</button>
-                                </div>
+                    <div :class="[themeClasses.innerCard, 'p-6 rounded-2xl border']">
+                        <label class="text-[10px] font-black opacity-40 uppercase block mb-4">附件路徑</label>
+                        <div v-for="(link, lIdx) in activeProject.links" :key="lIdx" class="mb-2">
+                            <div class="flex gap-2">
+                                <input v-model="link.url" placeholder="C:\ 或 URL" :class="[themeClasses.inputField, 'flex-1 px-3 py-1 rounded-lg text-[10px] outline-none']">
+                                <button @click="removeLink(lIdx)" class="text-rose-500 text-xs">×</button>
                             </div>
                         </div>
+                        <button @click="addLink" class="text-emerald-500 text-[10px] font-bold mt-2">+ 新增路徑</button>
                     </div>
                 </div>
 
-                <div class="flex justify-between items-center mb-8">
-                    <h3 class="font-black text-2xl tracking-tight">活動進度與詳細筆記</h3>
-                    <button @click="addActivity" class="px-8 py-3 bg-indigo-600 text-white rounded-[1.2rem] hover:bg-indigo-500 shadow-xl font-black transition-all">+ 新增控制點</button>
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="font-black text-xl">活動進度編輯</h3>
+                    <button @click="addActivity" class="bg-indigo-600 text-white px-6 py-2 rounded-xl text-sm font-bold shadow-lg">新增事件</button>
                 </div>
+                <div class="space-y-4">
+                    <div v-for="(act, idx) in sortedActivities" :key="act.id" :class="[themeClasses.innerCard, 'p-5 rounded-2xl border flex flex-col xl:flex-row gap-4 items-center']">
+                        <input type="date" v-model="act.date" :class="[themeClasses.inputField, 'rounded-lg px-2 py-1 text-xs outline-none shadow-sm']">
+                        <input v-model="act.name" placeholder="事件描述" class="flex-1 bg-transparent font-bold outline-none border-b border-transparent focus:border-indigo-500">
+                        <div class="flex items-center gap-4">
+                            <button @click="act.showNote = !act.showNote" :class="act.note ? 'text-amber-500' : 'text-slate-400'"><i class="fa-solid fa-note-sticky"></i></button>
+                            <button @click="toggleDone(act)" :class="['w-8 h-8 rounded-lg border-2 flex items-center justify-center transition-all', act.done ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-400/20 text-transparent']"><i class="fa-solid fa-check"></i></button>
+                        </div>
+                        <textarea v-if="act.showNote" v-model="act.note" class="w-full xl:w-64 h-16 bg-black/5 rounded-lg p-2 text-xs outline-none" placeholder="備註筆記..."></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div v-if="currentTab === 'report'" class="animate-in zoom-in duration-300">
+            <div v-if="!activeProject" class="text-center p-20 opacity-40 font-black">請先在管理分頁選擇一個計畫</div>
+            <div v-else :class="[themeClasses.card, 'p-12 rounded-[2rem] shadow-2xl border print-card']">
                 
-                <div class="space-y-6">
-                    <div v-for="(act, idx) in sortedActivities" :key="act.id" :class="[themeClasses.innerCard, 'p-8 rounded-[2.5rem] border transition-theme group']">
-                        <div class="flex flex-col xl:flex-row items-center gap-6">
-                            <select v-model="act.type" :class="[themeClasses.inputField, 'rounded-xl text-[10px] font-black px-3 py-2 outline-none']">
-                                <option value="activity">一般活動</option>
-                                <option value="deadline">🔥 DEADLINE</option>
-                            </select>
-                            <input type="date" v-model="act.date" :class="[themeClasses.inputField, 'rounded-xl px-4 py-2 text-xs font-bold outline-none']">
-                            <input v-model="act.name" placeholder="事件描述..." :class="['flex-1 bg-transparent text-xl font-black outline-none transition-colors', act.type === 'deadline' ? 'text-rose-500' : '']">
-                            
-                            <div class="flex items-center gap-5">
-                                <button @click="act.showNote = !act.showNote" :class="act.note ? 'text-amber-500' : 'text-slate-400'" title="編輯詳細筆記"><i class="fa-solid fa-note-sticky text-2xl"></i></button>
-                                <button @click="toggleDone(act)" :class="['w-10 h-10 rounded-2xl border-2 flex items-center justify-center transition-all', act.done ? 'bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'border-slate-500/30 text-transparent']"><i class="fa-solid fa-check text-xl"></i></button>
-                                <button @click="removeActivity(idx)" class="text-slate-600 hover:text-rose-500 p-2"><i class="fa-solid fa-trash-can text-sm"></i></button>
-                            </div>
+                <div class="flex justify-between items-start border-b-4 border-slate-900/10 pb-8 mb-8">
+                    <div>
+                        <h2 class="text-4xl font-black mb-2">{{ activeProject.name }}</h2>
+                        <div class="flex gap-4 text-sm font-bold">
+                            <span class="bg-indigo-500 text-white px-3 py-1 rounded-full">2026 年度執行報告</span>
+                            <span :class="activeProject.percent >= 100 ? 'bg-emerald-500' : 'bg-slate-500'" class="text-white px-3 py-1 rounded-full">
+                                整體進度: {{ calculateProgress(activeProject) }}%
+                            </span>
                         </div>
-                        <div v-if="act.showNote" class="mt-6 pt-6 border-t border-slate-500/10 animate-in slide-in-from-top-2 duration-300">
-                            <textarea v-model="act.note" placeholder="在此記錄詳細進度描述、備註或檢核清單..." :class="[themeClasses.inputField, 'w-full h-32 rounded-2xl p-6 text-sm outline-none resize-none placeholder:opacity-30']"></textarea>
+                    </div>
+                    <button @click="window.print()" class="no-print bg-slate-800 text-white px-6 py-2 rounded-xl font-bold text-sm"><i class="fa-solid fa-print mr-2"></i> 列印報告</button>
+                </div>
+
+                <div class="grid grid-cols-3 gap-8 mb-10">
+                    <div>
+                        <h4 class="text-[10px] font-black opacity-40 uppercase tracking-widest mb-2">承辦單位</h4>
+                        <p class="text-xl font-bold">{{ activeProject.org || '未填寫' }}</p>
+                    </div>
+                    <div class="col-span-2">
+                        <h4 class="text-[10px] font-black opacity-40 uppercase tracking-widest mb-2">計畫聯絡人</h4>
+                        <div class="flex flex-wrap gap-4">
+                            <div v-for="c in activeProject.contacts" class="bg-black/5 px-4 py-2 rounded-xl border border-slate-500/10">
+                                <span class="font-black mr-2">{{ c.name }}</span>
+                                <span class="text-xs opacity-60">{{ c.info }}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
+
+                <div>
+                    <h4 class="text-[10px] font-black opacity-40 uppercase tracking-widest mb-6 border-b pb-2">執行情形追蹤 (按月排列)</h4>
+                    <div class="space-y-4">
+                        <div v-for="month in 12" :key="month" class="flex gap-4">
+                            <div class="w-16 text-center">
+                                <div class="text-2xl font-black opacity-20">{{ month }}月</div>
+                            </div>
+                            <div class="flex-1 space-y-3 pb-6 border-l-2 border-slate-500/10 pl-6 relative">
+                                <div v-if="getActivitiesByMonth(month).length === 0" class="text-xs italic opacity-30 py-2">本月無規劃事件</div>
+                                <div v-for="act in getActivitiesByMonth(month)" :key="act.id" class="flex flex-col md:flex-row gap-4 bg-black/5 p-4 rounded-2xl border border-slate-500/5 hover:border-indigo-500/30 transition-colors">
+                                    <div class="md:w-32 flex items-center">
+                                        <span class="text-xs font-black px-2 py-1 bg-white/50 rounded-lg">{{ dayjs(act.date).format('MM/DD') }}</span>
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="flex items-center gap-3 mb-1">
+                                            <i v-if="act.done" class="fa-solid fa-circle-check text-emerald-500"></i>
+                                            <i v-else class="fa-solid fa-circle-notch text-slate-300 animate-spin-slow"></i>
+                                            <span :class="['font-bold text-lg', act.done ? 'opacity-40 line-through' : '']">{{ act.name }}</span>
+                                            <span v-if="act.type === 'deadline'" class="bg-rose-500 text-[10px] text-white px-2 py-0.5 rounded font-black">DEADLINE</span>
+                                        </div>
+                                        <div class="text-xs font-bold" :class="act.done ? 'text-emerald-600' : 'text-amber-600'">
+                                            狀態：{{ act.done ? '已達成' : (dayjs().isAfter(dayjs(act.date)) ? '🔥 逾期' : '進行中') }}
+                                        </div>
+                                    </div>
+                                    <div class="md:w-1/3 border-t md:border-t-0 md:border-l border-slate-500/10 md:pl-6 pt-3 md:pt-0">
+                                        <h5 class="text-[10px] font-black opacity-30 uppercase mb-1">備註(筆記)</h5>
+                                        <p class="text-xs opacity-70 whitespace-pre-wrap leading-relaxed">{{ act.note || '無備註內容' }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
@@ -180,21 +198,11 @@
         createApp({
             data() {
                 return {
-                    theme: localStorage.getItem('zenplan-theme') || 'dark',
+                    theme: localStorage.getItem('zenplan-theme') || 'gray',
                     currentTab: 'time',
                     selectedPid: null,
                     showToast: false,
-                    projects: JSON.parse(localStorage.getItem('zenplan-flagship-v2')) || [
-                        { 
-                            id: Date.now(), 
-                            name: '示範計畫：全功能整合', 
-                            contacts: [{ name: '專案經理', info: 'someone@example.com' }], 
-                            links: [{ title: '本地檔案範例', url: 'C:\\Projects\\Report.pdf' }],
-                            activities: [
-                                { id: 101, name: '產品上市大限', date: '2026-10-15', done: false, type: 'deadline', note: '這是一個詳細筆記示範內容。', showNote: true }
-                            ] 
-                        }
-                    ]
+                    projects: JSON.parse(localStorage.getItem('zenplan-report-v1')) || []
                 }
             },
             computed: {
@@ -202,42 +210,52 @@
                 sortedActivities() { return this.activeProject?.activities.sort((a,b) => dayjs(a.date).diff(dayjs(b.date))) || []; },
                 themeClasses() {
                     const themes = {
-                        dark: { body: 'bg-slate-950 text-slate-300', card: 'bg-slate-900 border-slate-800', brand: 'text-indigo-400', tabBg: 'bg-slate-900 border-slate-800', innerCard: 'bg-slate-950/40 border-slate-800', inputField: 'bg-slate-900 border-slate-800 text-slate-200 focus:border-indigo-500', inputTitle: 'border-slate-800 text-white focus:border-indigo-500' },
-                        light: { body: 'bg-slate-100 text-slate-700', card: 'bg-white border-slate-200', brand: 'text-indigo-600', tabBg: 'bg-slate-300/30 border-slate-200', innerCard: 'bg-slate-50 border-slate-200/60', inputField: 'bg-white border-slate-200 text-slate-700 focus:border-indigo-500', inputTitle: 'border-slate-100 text-slate-900 focus:border-indigo-500' },
-                        gray: { body: 'bg-zinc-200 text-zinc-700', card: 'bg-zinc-100 border-zinc-300', brand: 'text-zinc-900', tabBg: 'bg-zinc-300/50 border-zinc-300', innerCard: 'bg-zinc-200/50 border-zinc-300', inputField: 'bg-zinc-100 border-zinc-300 text-zinc-800 focus:border-zinc-500', inputTitle: 'border-zinc-300 text-zinc-900 focus:border-zinc-500' }
+                        gray: { body: 'bg-zinc-100 text-zinc-800', card: 'bg-white border-zinc-200', brand: 'text-zinc-900', tabBg: 'bg-zinc-200/50 border-zinc-200', innerCard: 'bg-zinc-50 border-zinc-200', inputField: 'bg-white border-zinc-200 text-zinc-800', inputTitle: 'border-zinc-100 text-zinc-900 focus:border-indigo-500' },
+                        dark: { body: 'bg-[#0a0f1e] text-slate-300', card: 'bg-[#121a2e] border-slate-800', brand: 'text-indigo-300', tabBg: 'bg-[#121a2e] border-slate-800', innerCard: 'bg-[#0a0f1e] border-slate-800', inputField: 'bg-[#121a2e] border-slate-700 text-slate-200', inputTitle: 'border-slate-800 text-white focus:border-indigo-400' },
+                        light: { body: 'bg-slate-50 text-slate-700', card: 'bg-white border-slate-200', brand: 'text-indigo-600', tabBg: 'bg-slate-200 border-slate-200', innerCard: 'bg-slate-50 border-slate-100', inputField: 'bg-white border-slate-200 text-slate-700', inputTitle: 'border-slate-100 text-slate-900 focus:border-indigo-500' }
                     };
                     return themes[this.theme];
                 }
             },
             watch: {
-                projects: { handler(val) { localStorage.setItem('zenplan-flagship-v2', JSON.stringify(val)); }, deep: true }
+                projects: { handler(val) { localStorage.setItem('zenplan-report-v1', JSON.stringify(val)); }, deep: true }
             },
             methods: {
                 dayjs,
                 setTheme(t) { this.theme = t; localStorage.setItem('zenplan-theme', t); },
-                themeBtnClass(active) { return `px-4 py-2 rounded-xl transition-all ${active ? 'bg-indigo-500 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`; },
+                themeBtnClass(active) { return `px-3 py-1.5 rounded-lg transition-all ${active ? 'bg-indigo-500 text-white shadow-lg' : 'text-slate-400 hover:text-indigo-500'}`; },
                 tabClass(active) {
-                    const activeStyles = { dark: 'bg-indigo-500 text-white shadow-xl', light: 'bg-indigo-600 text-white shadow-xl', gray: 'bg-zinc-800 text-white shadow-lg' };
-                    return `px-12 py-3.5 text-base font-black rounded-xl transition-all duration-300 ${active ? activeStyles[this.theme] + ' scale-105' : 'text-slate-500 hover:opacity-100'}`;
+                    const activeStyles = { gray: 'bg-zinc-800 text-white shadow-lg', dark: 'bg-indigo-500 text-white shadow-xl', light: 'bg-indigo-600 text-white shadow-lg' };
+                    return `px-10 py-3 text-sm font-black rounded-xl transition-all ${active ? activeStyles[this.theme] + ' scale-105' : 'text-slate-400 opacity-60'}`;
                 },
                 projectItemClass(id) {
-                    const activeStyles = { dark: 'bg-indigo-900/30 border-indigo-500 text-white shadow-xl', light: 'bg-white border-indigo-500 text-indigo-700 shadow-xl', gray: 'bg-zinc-100 border-zinc-500 text-zinc-900' };
-                    return `p-6 rounded-[2rem] cursor-pointer transition-all border-2 ${this.selectedPid === id ? activeStyles[this.theme] + ' scale-[1.03]' : 'bg-transparent border-transparent opacity-40 hover:opacity-80'}`;
+                    const activeStyles = { gray: 'bg-white border-zinc-800 text-zinc-900 shadow-xl', dark: 'bg-indigo-900/20 border-indigo-400 text-indigo-100', light: 'bg-white border-indigo-500 text-indigo-700 shadow-xl' };
+                    return `p-5 rounded-2xl cursor-pointer transition-all border-2 ${this.selectedPid === id ? activeStyles[this.theme] + ' scale-[1.03]' : 'bg-transparent border-transparent opacity-30 hover:opacity-100'}`;
                 },
                 getYearPos(date) { const start = dayjs('2026-01-01'); return (dayjs(date).diff(start, 'day') / 365) * 100; },
-                isUrl(str) { return str && (str.startsWith('http') || str.startsWith('https')); },
-                copyToClipboard(text) { navigator.clipboard.writeText(text); this.showToast = true; setTimeout(() => this.showToast = false, 1500); },
+                getActivitiesByMonth(m) {
+                    if (!this.activeProject) return [];
+                    return this.activeProject.activities.filter(a => dayjs(a.date).month() + 1 === m)
+                                                     .sort((a,b) => dayjs(a.date).diff(dayjs(b.date)));
+                },
+                calculateProgress(p) {
+                    if (!p.activities.length) return 0;
+                    const done = p.activities.filter(a => a.done).length;
+                    return Math.round((done / p.activities.length) * 100);
+                },
                 toggleDone(act) { act.done = !act.done; },
-                addProject() { const id = Date.now(); this.projects.unshift({ id, name: '新計畫', contacts: [], links: [], activities: [] }); this.selectedPid = id; },
-                deleteProject() { if (confirm('確定要永久刪除此計畫嗎？')) { this.projects = this.projects.filter(p => p.id !== this.selectedPid); this.selectedPid = this.projects.length ? this.projects[0].id : null; } },
-                addContact() { this.activeProject.contacts.push({ name: '', info: '' }); },
-                removeContact(idx) { this.activeProject.contacts.splice(idx, 1); },
-                addLink() { this.activeProject.links.push({ title: '', url: '' }); },
-                removeLink(idx) { this.activeProject.links.splice(idx, 1); },
+                addProject() {
+                    const id = Date.now();
+                    this.projects.unshift({ id, name: '新年度計畫', org: '', contacts: [], links: [], activities: [] });
+                    this.selectedPid = id;
+                },
                 addActivity() { this.activeProject.activities.push({ id: Date.now(), name: '', date: dayjs().format('YYYY-MM-DD'), done: false, type: 'activity', note: '', showNote: false }); },
-                removeActivity(idx) { this.activeProject.activities.splice(idx, 1); },
-                exportData() { const link = document.createElement('a'); link.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.projects)); link.download = `zenplan_backup_${dayjs().format('YYYYMMDD')}.json`; link.click(); },
-                importData(event) { const reader = new FileReader(); reader.onload = (e) => { this.projects = JSON.parse(e.target.result); alert('資料匯入成功！'); }; reader.readAsText(event.target.files[0]); }
+                addContact() { this.activeProject.contacts.push({ name: '', info: '' }); },
+                removeContact(i) { this.activeProject.contacts.splice(i, 1); },
+                addLink() { this.activeProject.links.push({ title: '', url: '' }); },
+                removeLink(i) { this.activeProject.links.splice(i, 1); },
+                exportData() { const link = document.createElement('a'); link.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.projects)); link.download = "zenplan_report.json"; link.click(); },
+                importData(event) { const reader = new FileReader(); reader.onload = (e) => { this.projects = JSON.parse(e.target.result); }; reader.readAsText(event.target.files[0]); }
             },
             mounted() { if(this.projects.length) this.selectedPid = this.projects[0].id; }
         }).mount('#app')
