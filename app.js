@@ -382,36 +382,170 @@ createApp({
             return this.activeProject.activities.filter(a => dayjs(a.date).month() + 1 === m).sort((a, b) => dayjs(a.date).diff(dayjs(b.date)));
         },
 
-        // --- Excel 匯出 ---
+        // --- Excel 匯出 (Enhanced) ---
         exportToExcel() {
             if (!this.activeProject) return;
             const p = this.activeProject;
             const wb = XLSX.utils.book_new();
+            const now = dayjs().format('YYYY-MM-DD HH:mm');
 
-            // Sheet 1: 概況
-            const overviewData = [
-                ["專案名稱", p.name], ["客戶/單位", p.org],
-                ["目前狀態", p.status === 'completed' ? '已結案' : '進行中'], ["總體進度", `${this.calculateProgress(p)}%`],
-                [], ["利害關係人", "資訊"], ...p.contacts.map(c => [c.name, c.info])
+            // 輔助函數：設定欄寬
+            const setColWidths = (ws, widths) => {
+                ws['!cols'] = widths.map(w => ({ wch: w }));
+            };
+
+            // 計算統計數據
+            const stats = {
+                total: p.activities.length,
+                done: p.activities.filter(a => a.status === 'done').length,
+                pending: p.activities.filter(a => a.status === 'pending').length,
+                ontrack: p.activities.filter(a => a.status === 'ontrack').length,
+                risk: p.activities.filter(a => a.status === 'risk').length,
+                blocked: p.activities.filter(a => a.status === 'blocked').length,
+                deadlines: p.activities.filter(a => a.type === 'deadline').length,
+                tasks: p.activities.filter(a => a.type === 'activity').length
+            };
+            stats.progress = stats.total > 0 ? Math.round((stats.done / stats.total) * 100) : 0;
+
+            // ============================================
+            // Sheet 1: 儀表板總覽
+            // ============================================
+            const dashboardData = [
+                ["專案執行報告"],
+                [],
+                ["報告產生時間", now],
+                [],
+                ["═══ 專案基本資訊 ═══"],
+                ["專案名稱", p.name],
+                ["客戶/單位", p.org || '(未設定)'],
+                ["專案狀態", p.status === 'completed' ? '已結案' : '進行中'],
+                [],
+                ["═══ 進度摘要 ═══"],
+                ["整體進度", `${stats.progress}%`],
+                ["總任務數", stats.total],
+                ["已完成", stats.done],
+                ["待辦中", stats.pending],
+                ["進行中", stats.ontrack],
+                ["有風險", stats.risk],
+                ["已卡關", stats.blocked],
+                [],
+                ["═══ 任務類型分布 ═══"],
+                ["里程碑數量", stats.deadlines],
+                ["一般任務", stats.tasks],
+                [],
+                ["═══ 風險評估 ═══"],
+                ["風險指數", stats.blocked > 0 ? 'HIGH (有卡關項目)' : stats.risk > 0 ? 'MED (有風險項目)' : 'LOW (正常運作)'],
+                ["高風險數", (p.risks || []).filter(r => r.level === 'high').length],
+                ["中風險數", (p.risks || []).filter(r => r.level === 'med').length],
+                ["低風險數", (p.risks || []).filter(r => r.level === 'low').length]
             ];
-            const wsOverview = XLSX.utils.aoa_to_sheet(overviewData);
-            XLSX.utils.book_append_sheet(wb, wsOverview, "專案概況");
+            const wsDashboard = XLSX.utils.aoa_to_sheet(dashboardData);
+            setColWidths(wsDashboard, [20, 40]);
+            XLSX.utils.book_append_sheet(wb, wsDashboard, "儀表板");
 
-            // Sheet 2: 執行細節
-            const taskHeader = ["日期", "類型", "名稱", "狀態", "負責人", "備註"];
-            const taskData = p.activities.map(a => [
-                a.date, a.type === 'deadline' ? '里程碑' : '任務', a.name, this.statusText(a.status), a.owner, a.note
+            // ============================================
+            // Sheet 2: 執行明細 (按日期排序)
+            // ============================================
+            const sortedActivities = [...p.activities].sort((a, b) => dayjs(a.date).diff(dayjs(b.date)));
+            const taskHeader = ["#", "日期", "月份", "類型", "任務名稱", "狀態", "負責人", "備註"];
+            const taskData = sortedActivities.map((a, idx) => [
+                idx + 1,
+                a.date,
+                dayjs(a.date).format('M') + '月',
+                a.type === 'deadline' ? '🔷 里程碑' : '📋 任務',
+                a.name,
+                this.statusText(a.status),
+                a.owner || '-',
+                a.note || ''
             ]);
             const wsTasks = XLSX.utils.aoa_to_sheet([taskHeader, ...taskData]);
-            XLSX.utils.book_append_sheet(wb, wsTasks, "執行細節");
+            setColWidths(wsTasks, [5, 12, 6, 12, 35, 8, 10, 30]);
+            XLSX.utils.book_append_sheet(wb, wsTasks, "執行明細");
 
-            // Sheet 3: 風險日誌
-            const riskHeader = ["等級", "風險描述", "緩解對策"];
-            const riskData = p.risks.map(r => [r.level === 'high' ? '高' : r.level === 'med' ? '中' : '低', r.desc, r.action]);
+            // ============================================
+            // Sheet 3: 里程碑追蹤
+            // ============================================
+            const milestones = sortedActivities.filter(a => a.type === 'deadline');
+            const msHeader = ["#", "預定日期", "里程碑名稱", "狀態", "負責人", "距今天數", "備註"];
+            const msData = milestones.map((m, idx) => {
+                const daysFromNow = dayjs(m.date).diff(dayjs(), 'day');
+                let daysText = daysFromNow === 0 ? '今天' : daysFromNow > 0 ? `還有 ${daysFromNow} 天` : `已過 ${Math.abs(daysFromNow)} 天`;
+                return [
+                    idx + 1,
+                    m.date,
+                    m.name,
+                    this.statusText(m.status),
+                    m.owner || '-',
+                    daysText,
+                    m.note || ''
+                ];
+            });
+            const wsMilestones = XLSX.utils.aoa_to_sheet([msHeader, ...msData]);
+            setColWidths(wsMilestones, [5, 12, 35, 8, 10, 15, 30]);
+            XLSX.utils.book_append_sheet(wb, wsMilestones, "里程碑追蹤");
+
+            // ============================================
+            // Sheet 4: 風險日誌
+            // ============================================
+            const riskLevelOrder = { high: 1, med: 2, low: 3 };
+            const sortedRisks = [...(p.risks || [])].sort((a, b) => riskLevelOrder[a.level] - riskLevelOrder[b.level]);
+            const riskHeader = ["#", "風險等級", "風險描述", "緩解對策"];
+            const riskData = sortedRisks.map((r, idx) => [
+                idx + 1,
+                r.level === 'high' ? '🔴 高' : r.level === 'med' ? '🟡 中' : '🟢 低',
+                r.desc,
+                r.action
+            ]);
+            if (riskData.length === 0) {
+                riskData.push(['-', '無登記風險', '-', '-']);
+            }
             const wsRisks = XLSX.utils.aoa_to_sheet([riskHeader, ...riskData]);
+            setColWidths(wsRisks, [5, 12, 40, 40]);
             XLSX.utils.book_append_sheet(wb, wsRisks, "風險日誌");
 
-            XLSX.writeFile(wb, `${p.name}_報告.xlsx`);
+            // ============================================
+            // Sheet 5: 利害關係人
+            // ============================================
+            const contactHeader = ["#", "姓名/角色", "聯絡資訊/說明"];
+            const contactData = (p.contacts || []).map((c, idx) => [
+                idx + 1,
+                c.name,
+                c.info
+            ]);
+            if (contactData.length === 0) {
+                contactData.push(['-', '無登記關係人', '-']);
+            }
+            const wsContacts = XLSX.utils.aoa_to_sheet([contactHeader, ...contactData]);
+            setColWidths(wsContacts, [5, 25, 40]);
+            XLSX.utils.book_append_sheet(wb, wsContacts, "利害關係人");
+
+            // ============================================
+            // Sheet 6: 月份摘要
+            // ============================================
+            const monthSummaryHeader = ["月份", "任務數", "里程碑", "已完成", "進行中", "有風險", "卡關"];
+            const monthSummaryData = [];
+            for (let m = 1; m <= 12; m++) {
+                const monthActs = p.activities.filter(a => dayjs(a.date).month() + 1 === m);
+                if (monthActs.length > 0) {
+                    monthSummaryData.push([
+                        `${m}月`,
+                        monthActs.length,
+                        monthActs.filter(a => a.type === 'deadline').length,
+                        monthActs.filter(a => a.status === 'done').length,
+                        monthActs.filter(a => a.status === 'ontrack').length,
+                        monthActs.filter(a => a.status === 'risk').length,
+                        monthActs.filter(a => a.status === 'blocked').length
+                    ]);
+                }
+            }
+            const wsMonthly = XLSX.utils.aoa_to_sheet([monthSummaryHeader, ...monthSummaryData]);
+            setColWidths(wsMonthly, [8, 8, 10, 10, 10, 10, 8]);
+            XLSX.utils.book_append_sheet(wb, wsMonthly, "月份摘要");
+
+            // 匯出檔案
+            const fileName = `${p.name}_專案報告_${dayjs().format('YYYYMMDD')}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+            this.showToastMsg(`已匯出：${fileName}`);
         },
 
         // --- 資料匯入匯出 ---
