@@ -1,0 +1,327 @@
+/**
+ * 專案計畫管理平台 v2.0
+ * 樣式表 - 包含所有自訂 CSS 樣式
+ */
+
+/* ============================================
+   CSS 變數定義
+   ============================================ */
+:root {
+    --font-main: 'Helvetica Neue', Helvetica, Arial, 'Microsoft JhengHei', sans-serif;
+    --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    --gradient-success: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    --glass-bg: rgba(255, 255, 255, 0.7);
+    --glass-bg-dark: rgba(30, 41, 59, 0.8);
+}
+
+/* ============================================
+   基礎樣式
+   ============================================ */
+[v-cloak] {
+    display: none !important;
+}
+
+html {
+    font-family: var(--font-main);
+    font-size: 15px;
+}
+
+body {
+    line-height: 1.6;
+    overflow-y: scroll;
+}
+
+/* ============================================
+   過渡與動畫效果
+   ============================================ */
+.transition-theme {
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-lift {
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s;
+}
+
+.hover-lift:hover {
+    transform: translateY(-4px) scale(1.01);
+    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.15);
+}
+
+.diamond {
+    transform: rotate(45deg);
+}
+
+/* ============================================
+   玻璃擬態效果 (Glassmorphism)
+   ============================================ */
+.glass {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.dark .glass {
+    background: var(--glass-bg-dark);
+    border-color: rgba(100, 116, 139, 0.3);
+}
+
+/* ============================================
+   Logo 呼吸動畫
+   ============================================ */
+@keyframes logo-pulse {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4), 0 10px 25px -3px rgba(99, 102, 241, 0.5);
+    }
+    50% {
+        box-shadow: 0 0 30px 5px rgba(99, 102, 241, 0.3), 0 15px 35px -5px rgba(99, 102, 241, 0.6);
+    }
+}
+
+.logo-animated {
+    animation: logo-pulse 3s ease-in-out infinite;
+}
+
+/* ============================================
+   卡片漸變邊框
+   ============================================ */
+.card-gradient-border {
+    position: relative;
+    background: linear-gradient(white, white) padding-box, var(--gradient-primary) border-box;
+    border: 2px solid transparent;
+}
+
+.dark .card-gradient-border {
+    background: linear-gradient(#1e293b, #1e293b) padding-box, var(--gradient-primary) border-box;
+}
+
+/* ============================================
+   狀態動畫 - 卡關脈動
+   ============================================ */
+@keyframes pulse-red {
+    0% {
+        box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 8px rgba(244, 63, 94, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(244, 63, 94, 0);
+    }
+}
+
+.status-blocked {
+    animation: pulse-red 1.5s infinite;
+}
+
+/* ============================================
+   列印樣式
+   ============================================ */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+
+    body,
+    .print-card {
+        background: white !important;
+        color: black !important;
+        box-shadow: none !important;
+        border: none !important;
+    }
+
+    .print-area {
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+}
+
+/* ============================================
+   滾動條美化
+   ============================================ */
+::-webkit-scrollbar {
+    height: 6px;
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.5), rgba(139, 92, 246, 0.5));
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.8), rgba(139, 92, 246, 0.8));
+}
+
+/* ============================================
+   Toast 通知動畫
+   ============================================ */
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px) translateX(-50%) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) translateX(-50%) scale(1);
+    }
+}
+
+.animate-toast {
+    animation: slideUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* ============================================
+   淡入動畫
+   ============================================ */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.4s ease-out forwards;
+}
+
+/* ============================================
+   縮放動畫
+   ============================================ */
+@keyframes scaleUp {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.animate-scale-up {
+    animation: scaleUp 0.3s ease-out forwards;
+}
+
+/* ============================================
+   閃爍高亮
+   ============================================ */
+@keyframes highlight-flash {
+    0%, 100% {
+        background-color: transparent;
+    }
+    50% {
+        background-color: rgba(99, 102, 241, 0.1);
+    }
+}
+
+.highlight-new {
+    animation: highlight-flash 1s ease-in-out 2;
+}
+
+/* ============================================
+   進度條動畫
+   ============================================ */
+@keyframes progress-shine {
+    from {
+        left: -100%;
+    }
+    to {
+        left: 100%;
+    }
+}
+
+.progress-animated::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    animation: progress-shine 2s infinite;
+}
+
+/* ============================================
+   輸入框焦點效果
+   ============================================ */
+input:focus,
+textarea:focus,
+select:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+/* ============================================
+   按鈕波紋效果
+   ============================================ */
+.btn-ripple {
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-ripple::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+    transform: scale(0);
+    transition: transform 0.4s ease-out;
+}
+
+.btn-ripple:active::after {
+    transform: scale(2.5);
+}
+
+/* ============================================
+   今日標記線動畫
+   ============================================ */
+@keyframes today-pulse {
+    0%, 100% {
+        opacity: 0.5;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+
+.today-line {
+    animation: today-pulse 2s ease-in-out infinite;
+}
+
+/* ============================================
+   快捷鍵提示樣式
+   ============================================ */
+.kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 5px;
+    font-size: 11px;
+    font-weight: 600;
+    background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.dark .kbd {
+    background: linear-gradient(180deg, #475569 0%, #334155 100%);
+    border-color: #64748b;
+    color: #e2e8f0;
+}

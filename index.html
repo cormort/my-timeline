@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> 專案計畫管理平台 </title>
+    <title>專案計畫管理平台</title>
+
     <!-- Vue 3 -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <!-- Tailwind CSS -->
@@ -14,97 +16,101 @@
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <style>
-        :root { --font-main: 'Helvetica Neue', Helvetica, Arial, 'Microsoft JhengHei', sans-serif; }
-        [v-cloak] { display: none !important; }
-        html { font-family: var(--font-main); font-size: 15px; }
-        body { line-height: 1.6; overflow-y: scroll; }
-        
-        .transition-theme { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .hover-lift { transition: transform 0.2s, box-shadow 0.2s; }
-        .hover-lift:hover { transform: translateY(-3px); box-shadow: 0 10px 20px -5px rgba(0,0,0,0.1); }
-        .diamond { transform: rotate(45deg); }
-        
-        @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.7); } 70% { box-shadow: 0 0 0 6px rgba(244, 63, 94, 0); } 100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); } }
-        .status-blocked { animation: pulse-red 2s infinite; }
 
-        @media print {
-            .no-print { display: none !important; }
-            body, .print-card { background: white !important; color: black !important; box-shadow: none !important; border: none !important; }
-            .print-area { width: 100% !important; margin: 0 !important; padding: 0 !important; }
-        }
-
-        ::-webkit-scrollbar { height: 8px; width: 8px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.5); border-radius: 4px; }
-        
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px) translateX(-50%); } to { opacity: 1; transform: translateY(0) translateX(-50%); } }
-        .animate-toast { animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-    </style>
+    <!-- 自訂樣式 -->
+    <link rel="stylesheet" href="style.css">
 </head>
+
 <body :class="[themeClasses.body, 'transition-theme min-h-screen pb-20']">
     <div id="app" v-cloak class="max-w-[1400px] mx-auto p-4 md:p-8">
-        
+
         <!-- Toast 通知 -->
-        <div v-if="showToast" class="fixed bottom-8 left-1/2 z-[99] bg-slate-800 text-white px-6 py-3 rounded-lg font-bold shadow-2xl flex items-center gap-3 animate-toast">
+        <div v-if="showToast"
+            class="fixed bottom-8 left-1/2 z-[99] bg-slate-800 text-white px-6 py-3 rounded-lg font-bold shadow-2xl flex items-center gap-3 animate-toast">
             <i class="fa-solid fa-circle-check text-emerald-400"></i>
             <span>{{ toastMessage }}</span>
         </div>
 
         <!-- 選擇範本 Modal -->
-        <div v-if="showNewProjectModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" @click.self="showNewProjectModal = false">
+        <div v-if="showNewProjectModal"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+            @click.self="showNewProjectModal = false">
             <div :class="[themeClasses.card, 'w-full max-w-2xl rounded-3xl p-8 shadow-2xl transform transition-all']">
                 <h3 class="text-2xl font-black mb-6 flex items-center gap-3">
                     <i class="fa-solid fa-wand-magic-sparkles text-indigo-500"></i> 建立新專案
                 </h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                    <button @click="createFromTemplate(null)" :class="[themeClasses.innerCard, 'p-6 rounded-2xl border-2 border-dashed border-slate-300 hover:border-indigo-500 hover:bg-indigo-50/50 transition-all text-left group']">
-                        <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mb-4 group-hover:bg-indigo-500 group-hover:text-white transition-colors">
+                    <button @click="createFromTemplate(null)"
+                        :class="[themeClasses.innerCard, 'p-6 rounded-2xl border-2 border-dashed border-slate-300 hover:border-indigo-500 hover:bg-indigo-50/50 transition-all text-left group']">
+                        <div
+                            class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mb-4 group-hover:bg-indigo-500 group-hover:text-white transition-colors">
                             <i class="fa-solid fa-file text-xl"></i>
                         </div>
                         <div class="font-bold text-lg mb-1">空白專案</div>
                         <div class="text-xs opacity-60">從零開始建立全新的專案計畫</div>
                     </button>
-                    
-                    <button v-for="tpl in templates" :key="tpl.id" @click="createFromTemplate(tpl)" :class="[themeClasses.innerCard, 'p-6 rounded-2xl border border-slate-200 hover:border-indigo-500 hover:bg-indigo-50/50 transition-all text-left group shadow-sm']">
-                        <div class="w-12 h-12 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center mb-4 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+
+                    <button v-for="tpl in templates" :key="tpl.id" @click="createFromTemplate(tpl)"
+                        :class="[themeClasses.innerCard, 'p-6 rounded-2xl border border-slate-200 hover:border-indigo-500 hover:bg-indigo-50/50 transition-all text-left group shadow-sm']">
+                        <div
+                            class="w-12 h-12 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center mb-4 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
                             <i class="fa-solid fa-copy text-xl"></i>
                         </div>
                         <div class="font-bold text-lg mb-1 truncate">{{ tpl.name }}</div>
-                        <div class="text-xs opacity-60">{{ tpl.activities.length }} 個任務節點 · {{ tpl.risks.length }} 個風險預設</div>
+                        <div class="text-xs opacity-60">{{ tpl.activities.length }} 個任務節點 · {{ tpl.risks.length }} 個風險預設
+                        </div>
                     </button>
                 </div>
                 <div class="flex justify-end">
-                    <button @click="showNewProjectModal = false" class="px-6 py-2 text-slate-400 font-bold hover:text-slate-600">取消</button>
+                    <button @click="showNewProjectModal = false"
+                        class="px-6 py-2 text-slate-400 font-bold hover:text-slate-600">取消</button>
                 </div>
             </div>
         </div>
 
         <!-- Header -->
-        <header :class="[themeClasses.card, 'no-print flex flex-col md:flex-row justify-between items-center mb-6 p-6 rounded-2xl border shadow-sm transition-theme']">
-            <div class="flex items-center gap-4 mb-4 md:mb-0">
-                <div class="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center text-white text-2xl shadow-lg shadow-indigo-500/30">
+        <header
+            :class="[themeClasses.card, 'glass no-print flex flex-col md:flex-row justify-between items-center mb-6 p-6 rounded-2xl border shadow-lg transition-theme relative overflow-hidden']">
+            <!-- 背景裝飾 -->
+            <div
+                class="absolute -top-20 -right-20 w-40 h-40 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 rounded-full blur-3xl">
+            </div>
+            <div
+                class="absolute -bottom-10 -left-10 w-32 h-32 bg-gradient-to-br from-cyan-500/15 to-blue-500/15 rounded-full blur-2xl">
+            </div>
+
+            <div class="flex items-center gap-4 mb-4 md:mb-0 relative z-10">
+                <div
+                    class="w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center text-white text-2xl logo-animated">
                     <i class="fa-solid fa-layer-group"></i>
                 </div>
                 <div>
-                    <h1 :class="[themeClasses.brand, 'text-2xl font-black tracking-tight']"> 專案計畫管理平台  <span class="text-xs align-top bg-emerald-200 text-emerald-800 px-1.5 py-0.5 rounded ml-1">UI Fix</span></h1>
-                    <p class="text-sm opacity-50 font-bold">專案組合管理系統 (PPM)</p>
+                    <h1 :class="[themeClasses.brand, 'text-2xl font-black tracking-tight']"> 專案計畫管理平台
+                        <span
+                            class="text-[10px] align-top bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-2 py-0.5 rounded-full ml-1 font-bold">v2.0</span>
+                    </h1>
+                    <p class="text-sm opacity-50 font-bold flex items-center gap-2">
+                        專案組合管理系統 (PPM)
+                        <span class="kbd hidden md:inline-flex" title="按 N 新增專案">N</span>
+                    </p>
                 </div>
             </div>
-            
-            <div class="flex gap-3">
-                <div class="flex bg-slate-100 p-1 rounded-lg border border-slate-200 dark:bg-slate-800 dark:border-slate-700">
-                    <button v-for="t in ['light','dark']" :key="t" @click="setTheme(t)" 
-                            :class="[theme === t ? 'bg-white shadow text-indigo-600 dark:bg-slate-600 dark:text-white' : 'text-slate-400', 'w-8 h-8 rounded flex items-center justify-center transition-all']">
+
+            <div class="flex gap-2 md:gap-3 relative z-10">
+                <div
+                    class="flex bg-slate-100/80 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200/50 dark:border-slate-700/50 backdrop-blur-sm">
+                    <button v-for="t in ['light','dark']" :key="t" @click="setTheme(t)"
+                        :class="[theme === t ? 'bg-white shadow-md text-indigo-600 dark:bg-slate-600 dark:text-white' : 'text-slate-400 hover:text-slate-600', 'w-9 h-9 rounded-lg flex items-center justify-center transition-all btn-ripple']">
                         <i :class="['fa-solid', t==='light'?'fa-sun':'fa-moon']"></i>
                     </button>
                 </div>
-                <button @click="exportData" class="px-4 py-2 bg-slate-700 text-white rounded-lg text-sm font-bold hover:bg-slate-600 transition-all flex items-center gap-2">
-                    <i class="fa-solid fa-download"></i> 備份
+                <button @click="exportData"
+                    class="px-4 py-2 bg-slate-700 hover:bg-slate-800 text-white rounded-xl text-sm font-bold transition-all flex items-center gap-2 btn-ripple shadow-md hover:shadow-lg">
+                    <i class="fa-solid fa-download"></i> <span class="hidden md:inline">備份</span>
                 </button>
-                <label class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-500 transition-all cursor-pointer flex items-center gap-2 shadow-lg shadow-indigo-500/20">
-                    <i class="fa-solid fa-upload"></i> 匯入
+                <label
+                    class="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-xl text-sm font-bold transition-all cursor-pointer flex items-center gap-2 shadow-lg shadow-indigo-500/30 btn-ripple">
+                    <i class="fa-solid fa-upload"></i> <span class="hidden md:inline">匯入</span>
                     <input type="file" @change="importData" class="hidden" accept=".json">
                 </label>
             </div>
@@ -112,91 +118,196 @@
 
         <!-- Tabs -->
         <nav class="no-print flex gap-2 mb-8 border-b border-slate-200 dark:border-slate-700 pb-1 overflow-x-auto">
-            <button v-for="tab in tabs" :key="tab.id"
-                    @click="currentTab = tab.id" 
-                    :class="['px-6 py-3 text-sm font-bold rounded-t-lg transition-all border-b-2 whitespace-nowrap', currentTab === tab.id ? 'border-indigo-500 text-indigo-600 bg-indigo-50/50 dark:bg-slate-800 dark:text-indigo-400' : 'border-transparent text-slate-400 hover:text-slate-600']">
+            <button v-for="tab in tabs" :key="tab.id" @click="currentTab = tab.id"
+                :class="['px-6 py-3 text-sm font-bold rounded-t-lg transition-all border-b-2 whitespace-nowrap', currentTab === tab.id ? 'border-indigo-500 text-indigo-600 bg-indigo-50/50 dark:bg-slate-800 dark:text-indigo-400' : 'border-transparent text-slate-400 hover:text-slate-600']">
                 <i :class="['fa-solid mr-2', tab.icon]"></i>{{tab.n}}
             </button>
         </nav>
 
         <!-- TAB 1: 年度甘特圖 -->
         <main v-if="currentTab === 'time'" class="animate-fade-in">
-            <section :class="[themeClasses.card, 'p-8 rounded-3xl shadow-xl border transition-theme overflow-hidden']">
-                <div class="flex items-center justify-between mb-8">
-                    <h2 class="font-black text-xl flex items-center gap-2">
-                        <i class="fa-solid fa-chart-gantt text-indigo-500"></i> 進行中專案全覽
+            <section
+                :class="[themeClasses.card, 'glass p-8 rounded-3xl shadow-xl border transition-theme overflow-hidden relative']">
+                <!-- 背景裝飾 -->
+                <div
+                    class="absolute -top-32 -right-32 w-64 h-64 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 rounded-full blur-3xl pointer-events-none">
+                </div>
+
+                <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
+                    <h2 class="font-black text-xl flex items-center gap-3">
+                        <div
+                            class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center text-white">
+                            <i class="fa-solid fa-chart-gantt"></i>
+                        </div>
+                        <span>{{ new Date().getFullYear() }} 年度專案全覽</span>
+                        <span
+                            class="text-xs font-medium bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400 px-2 py-0.5 rounded-full">{{
+                            activeProjects.length }} 進行中</span>
                     </h2>
-                    <div class="flex gap-4 text-xs font-bold opacity-70">
-                        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> 正常</span>
-                        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-500"></span> 風險</span>
-                        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span> 卡關</span>
+                    <div class="flex gap-3 text-xs font-bold">
+                        <span
+                            class="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 rounded-full text-emerald-600 dark:text-emerald-400">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span> 正常
+                        </span>
+                        <span
+                            class="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 dark:bg-amber-900/20 rounded-full text-amber-600 dark:text-amber-400">
+                            <span class="w-2 h-2 rounded-full bg-amber-500"></span> 風險
+                        </span>
+                        <span
+                            class="flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 dark:bg-rose-900/20 rounded-full text-rose-600 dark:text-rose-400">
+                            <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span> 卡關
+                        </span>
                     </div>
                 </div>
                 <div class="relative overflow-x-auto pb-4">
                     <div class="min-w-[1000px] xl:min-w-full relative">
-                        <div class="flex border-b border-slate-200 dark:border-slate-700 mb-6 text-xs font-bold opacity-40">
-                            <div v-for="m in 12" :key="m" class="flex-1 text-center py-2">{{m}}月</div>
+                        <!-- 月份標籤 -->
+                        <div class="flex border-b border-slate-200 dark:border-slate-700 mb-6">
+                            <div v-for="m in 12" :key="m"
+                                :class="['flex-1 text-center py-2 text-xs font-bold transition-colors', m === new Date().getMonth() + 1 ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-900/20' : 'text-slate-400']">
+                                {{m}}月
+                            </div>
                         </div>
-                        <div v-if="activeProjects.length === 0" class="text-center py-12 opacity-30 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-dashed border-slate-300">目前無進行中的專案</div>
-                        <div v-for="p in activeProjects" :key="p.id" class="relative h-16 border-b border-slate-100 dark:border-slate-700/50 flex items-center group hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors px-2">
-                            <div class="absolute left-0 -top-2 z-20"><span class="text-[10px] font-bold bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded text-slate-500">{{ p.name }}</span></div>
-                            <div class="w-full h-1 bg-slate-100 dark:bg-slate-700 rounded-full"></div>
-                            <div v-for="act in p.activities" :key="act.id" class="absolute top-1/2 -translate-y-1/2 group/point" :style="{ left: getYearPos(act.date) + '%' }">
-                                <div :class="['cursor-pointer transition-all hover:scale-150 z-10 relative border-2 shadow-sm', act.type === 'deadline' ? 'w-4 h-4 diamond' : 'w-3 h-3 rounded-full', getStatusColorClass(act.status)]" :title="`${act.date} | ${act.name}`">
-                                     <i v-if="act.status === 'blocked'" class="fa-solid fa-exclamation text-white text-[8px] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -rotate-45"></i>
+                        <!-- 空狀態 -->
+                        <div v-if="activeProjects.length === 0"
+                            class="text-center py-16 opacity-40 bg-gradient-to-br from-slate-50 to-slate-100/50 dark:from-slate-800/50 dark:to-slate-800/30 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700">
+                            <i class="fa-solid fa-calendar-xmark text-5xl mb-4 block text-slate-300"></i>
+                            <div class="font-bold">目前無進行中的專案</div>
+                            <button @click="showNewProjectModal = true"
+                                class="mt-4 text-sm text-indigo-500 font-bold hover:underline">+ 建立第一個專案</button>
+                        </div>
+                        <!-- 專案時間軸 -->
+                        <div v-for="(p, pIdx) in activeProjects" :key="p.id"
+                            class="relative h-16 border-b border-slate-100 dark:border-slate-700/50 flex items-center group hover:bg-indigo-50/30 dark:hover:bg-indigo-900/10 transition-colors px-2 cursor-pointer"
+                            @click="selectedPid = p.id; currentTab = 'project'">
+                            <div class="absolute left-0 -top-2 z-20">
+                                <span
+                                    class="text-[10px] font-bold bg-white dark:bg-slate-700 px-2.5 py-0.5 rounded-full shadow-sm border border-slate-100 dark:border-slate-600 text-slate-600 dark:text-slate-300 truncate max-w-[150px] inline-block">
+                                    {{ p.name }}
+                                </span>
+                            </div>
+                            <!-- 進度背景條 -->
+                            <div
+                                class="w-full h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full relative overflow-hidden">
+                                <div class="absolute inset-y-0 left-0 bg-gradient-to-r from-indigo-400 to-purple-500 rounded-full transition-all duration-500 progress-animated"
+                                    :style="{ width: calculateProgress(p) + '%' }"></div>
+                            </div>
+                            <!-- 里程碑節點 -->
+                            <div v-for="act in p.activities" :key="act.id"
+                                class="absolute top-1/2 -translate-y-1/2 group/point z-10"
+                                :style="{ left: getYearPos(act.date) + '%' }">
+                                <div :class="['cursor-pointer transition-all hover:scale-[1.8] relative border-2 shadow-md hover:shadow-lg', act.type === 'deadline' ? 'w-4 h-4 diamond' : 'w-3 h-3 rounded-full', getStatusColorClass(act.status)]"
+                                    :title="`${act.date} | ${act.name} (${statusText(act.status)})`">
+                                    <i v-if="act.status === 'blocked'"
+                                        class="fa-solid fa-exclamation text-white text-[8px] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -rotate-45"></i>
+                                </div>
+                                <!-- Hover Tooltip -->
+                                <div
+                                    class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-slate-900 text-white text-[10px] rounded-lg whitespace-nowrap opacity-0 group-hover/point:opacity-100 transition-opacity pointer-events-none z-50 shadow-xl">
+                                    <div class="font-bold">{{ act.name }}</div>
+                                    <div class="text-slate-400">{{ act.date }} · {{ statusText(act.status) }}</div>
+                                    <div
+                                        class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900">
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <div v-if="isCurrentYear" class="absolute top-0 bottom-0 w-px border-l-2 border-rose-500/30 border-dashed z-0 pointer-events-none" :style="{ left: getYearPos(today) + '%' }"><div class="bg-rose-500 text-white text-[9px] px-1.5 py-0.5 rounded absolute -top-5 -left-4 font-bold whitespace-nowrap">TODAY</div></div>
+                        <!-- 今日標記線 -->
+                        <div v-if="isCurrentYear"
+                            class="absolute top-0 bottom-0 w-0.5 bg-gradient-to-b from-rose-500 via-rose-500 to-transparent z-20 pointer-events-none today-line"
+                            :style="{ left: getYearPos(today) + '%' }">
+                            <div
+                                class="bg-rose-500 text-white text-[9px] px-2 py-0.5 rounded-full absolute -top-6 left-1/2 -translate-x-1/2 font-bold whitespace-nowrap shadow-lg shadow-rose-500/30">
+                                TODAY
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
         </main>
 
         <!-- TAB 2: 專案管理 -->
-        <main v-if="currentTab === 'project'" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <main v-if="currentTab === 'project'" class="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-fade-in">
             <!-- 左側列表 -->
             <aside class="lg:col-span-3 flex flex-col h-[calc(100vh-200px)]">
-                <button @click="showNewProjectModal = true" class="w-full py-4 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white rounded-2xl shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:-translate-y-1 transition-all font-black text-sm flex items-center justify-center gap-2 mb-4 shrink-0">
-                    <i class="fa-solid fa-plus"></i> 建立新專案
+                <button @click="showNewProjectModal = true"
+                    class="w-full py-4 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-2xl shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:-translate-y-1 transition-all font-black text-sm flex items-center justify-center gap-2 mb-4 shrink-0 btn-ripple">
+                    <i class="fa-solid fa-plus"></i> 建立新專案 <span
+                        class="kbd ml-1 bg-white/20 border-white/30 text-white text-[9px]">N</span>
                 </button>
-                <div class="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl mb-4 shrink-0">
-                    <button @click="listFilter = 'active'" :class="['flex-1 py-1.5 text-xs font-bold rounded-lg transition-all', listFilter === 'active' ? 'bg-white dark:bg-slate-700 shadow text-indigo-600 dark:text-white' : 'text-slate-400']">進行中</button>
-                    <button @click="listFilter = 'completed'" :class="['flex-1 py-1.5 text-xs font-bold rounded-lg transition-all', listFilter === 'completed' ? 'bg-white dark:bg-slate-700 shadow text-slate-800 dark:text-white' : 'text-slate-400']">已結案</button>
+
+                <!-- 搜尋框 -->
+                <div class="relative mb-4 shrink-0">
+                    <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                    <input v-model="searchQuery" type="text" placeholder="搜尋專案名稱或客戶..."
+                        class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium placeholder-slate-400 transition-all">
+                </div>
+
+                <div class="flex p-1 bg-slate-100/80 dark:bg-slate-800/80 rounded-xl mb-4 shrink-0 backdrop-blur-sm">
+                    <button @click="listFilter = 'active'"
+                        :class="['flex-1 py-2 text-xs font-bold rounded-lg transition-all', listFilter === 'active' ? 'bg-white dark:bg-slate-700 shadow-md text-indigo-600 dark:text-white' : 'text-slate-400 hover:text-slate-600']">
+                        <i class="fa-solid fa-play mr-1"></i> 進行中
+                    </button>
+                    <button @click="listFilter = 'completed'"
+                        :class="['flex-1 py-2 text-xs font-bold rounded-lg transition-all', listFilter === 'completed' ? 'bg-white dark:bg-slate-700 shadow-md text-emerald-600 dark:text-white' : 'text-slate-400 hover:text-slate-600']">
+                        <i class="fa-solid fa-check mr-1"></i> 已結案
+                    </button>
                 </div>
                 <div class="space-y-3 overflow-y-auto pr-1 flex-1">
-                    <div v-if="filteredProjects.length === 0" class="text-center py-8 opacity-30 text-xs">沒有{{ listFilter==='active'?'進行中':'已結案' }}的專案</div>
-                    <div v-for="p in filteredProjects" :key="p.id" @click="selectedPid = p.id" 
-                         :class="['p-4 rounded-2xl cursor-pointer transition-all border-l-4 group relative overflow-hidden shadow-sm', selectedPid === p.id ? themeClasses.activeItem : themeClasses.inactiveItem]">
+                    <div v-if="searchedProjects.length === 0" class="text-center py-12 opacity-40">
+                        <i class="fa-solid fa-folder-open text-4xl mb-3 block"></i>
+                        <div class="text-xs font-bold">{{ searchQuery ? '找不到符合的專案' : '沒有' +
+                            (listFilter==='active'?'進行中':'已結案') + '的專案' }}</div>
+                        <button v-if="!searchQuery && listFilter==='active'" @click="showNewProjectModal = true"
+                            class="mt-3 text-xs text-indigo-500 font-bold hover:underline">+ 建立第一個專案</button>
+                    </div>
+                    <div v-for="(p, index) in searchedProjects" :key="p.id" @click="selectedPid = p.id"
+                        :class="['p-4 rounded-2xl cursor-pointer transition-all border-l-4 group relative overflow-hidden hover-lift', selectedPid === p.id ? themeClasses.activeItem : themeClasses.inactiveItem]"
+                        :style="{ animationDelay: index * 50 + 'ms' }">
                         <div class="flex justify-between items-start mb-2 relative z-10">
                             <div class="font-bold truncate pr-2 text-sm">{{ p.name }}</div>
-                            <div class="text-[10px] font-black px-1.5 py-0.5 rounded bg-black/10">{{ calculateProgress(p) }}%</div>
+                            <div
+                                :class="['text-[10px] font-black px-2 py-0.5 rounded-full', calculateProgress(p) === 100 ? 'bg-emerald-100 text-emerald-600' : 'bg-indigo-100 text-indigo-600']">
+                                {{
+                                calculateProgress(p) }}%</div>
                         </div>
+                        <div v-if="p.org" class="text-[10px] text-slate-400 mb-2 truncate relative z-10"><i
+                                class="fa-solid fa-building mr-1"></i>{{ p.org }}</div>
                         <div class="flex gap-2 text-[10px] opacity-60 relative z-10 font-bold uppercase">
-                            <span v-if="p.status === 'completed'" class="text-emerald-600 bg-emerald-100 px-1 rounded"><i class="fa-solid fa-check-double mr-1"></i>已結案</span>
-                            <span v-else-if="getRiskCount(p).blocked > 0" class="text-rose-500"><i class="fa-solid fa-ban mr-1"></i>{{ getRiskCount(p).blocked }} 卡關</span>
+                            <span v-if="p.status === 'completed'"
+                                class="text-emerald-600 bg-emerald-100 px-1 rounded"><i
+                                    class="fa-solid fa-check-double mr-1"></i>已結案</span>
+                            <span v-else-if="getRiskCount(p).blocked > 0" class="text-rose-500"><i
+                                    class="fa-solid fa-ban mr-1"></i>{{ getRiskCount(p).blocked }} 卡關</span>
                             <span v-else class="text-slate-500">進行中</span>
                         </div>
-                        <div class="absolute bottom-0 left-0 h-1 bg-indigo-500/20 transition-all duration-500" :style="{ width: calculateProgress(p) + '%' }"></div>
+                        <div class="absolute bottom-0 left-0 h-1 bg-indigo-500/20 transition-all duration-500"
+                            :style="{ width: calculateProgress(p) + '%' }"></div>
                     </div>
                 </div>
             </aside>
 
             <!-- 右側編輯區 -->
-            <article v-if="activeProject" :class="[themeClasses.card, 'lg:col-span-9 p-6 md:p-10 rounded-3xl shadow-xl border transition-theme relative']">
-                
+            <article v-if="activeProject"
+                :class="[themeClasses.card, 'lg:col-span-9 p-6 md:p-10 rounded-3xl shadow-xl border transition-theme relative']">
+
                 <!-- 修正區塊：整合右上角工具列 (轉範本 / 結案 / 刪除) -->
                 <div class="absolute top-6 right-6 z-20 flex gap-2">
-                    <button @click="saveAsTemplate" class="px-3 py-1.5 bg-amber-50 text-amber-600 hover:bg-amber-100 rounded-lg text-xs font-bold transition-all border border-amber-200" title="另存為新範本">
+                    <button @click="saveAsTemplate"
+                        class="px-3 py-1.5 bg-amber-50 text-amber-600 hover:bg-amber-100 rounded-lg text-xs font-bold transition-all border border-amber-200"
+                        title="另存為新範本">
                         <i class="fa-solid fa-copy mr-1"></i> 轉範本
                     </button>
-                    <button v-if="activeProject.status !== 'completed'" @click="toggleProjectStatus" class="px-3 py-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg text-xs font-bold transition-all border border-emerald-200">
+                    <button v-if="activeProject.status !== 'completed'" @click="toggleProjectStatus"
+                        class="px-3 py-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg text-xs font-bold transition-all border border-emerald-200">
                         <i class="fa-solid fa-box-archive mr-1"></i> 結案
                     </button>
-                    <button v-else @click="toggleProjectStatus" class="px-3 py-1.5 bg-slate-100 text-slate-600 hover:bg-slate-200 rounded-lg text-xs font-bold transition-all border border-slate-200">
+                    <button v-else @click="toggleProjectStatus"
+                        class="px-3 py-1.5 bg-slate-100 text-slate-600 hover:bg-slate-200 rounded-lg text-xs font-bold transition-all border border-slate-200">
                         <i class="fa-solid fa-box-open mr-1"></i> 重啟
                     </button>
-                    <button @click="deleteProject" class="px-3 py-1.5 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg text-xs font-bold transition-all border border-rose-200">
+                    <button @click="deleteProject"
+                        class="px-3 py-1.5 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg text-xs font-bold transition-all border border-rose-200">
                         <i class="fa-solid fa-trash-can mr-1"></i> 刪除
                     </button>
                 </div>
@@ -205,40 +316,65 @@
                 <div class="mt-8 mb-8 pb-6 border-b border-slate-100 dark:border-slate-700">
                     <div class="w-full mr-48"> <!-- mr-48 確保不撞到右上按鈕 -->
                         <label class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 block">專案名稱</label>
-                        <input v-model="activeProject.name" :disabled="isArchived" class="text-3xl font-black bg-transparent outline-none w-full placeholder-slate-300 dark:placeholder-slate-600 disabled:opacity-50" placeholder="輸入專案名稱...">
+                        <input v-model="activeProject.name" :disabled="isArchived"
+                            class="text-3xl font-black bg-transparent outline-none w-full placeholder-slate-300 dark:placeholder-slate-600 disabled:opacity-50"
+                            placeholder="輸入專案名稱...">
                     </div>
                 </div>
 
-                <div v-if="isArchived" class="absolute inset-0 bg-slate-50/50 dark:bg-slate-900/50 z-10 flex items-center justify-center backdrop-blur-[1px] rounded-3xl pointer-events-none">
-                    <div class="bg-white dark:bg-slate-800 px-6 py-3 rounded-full shadow-2xl border border-slate-200 dark:border-slate-700 font-bold text-slate-500 flex items-center gap-2">
+                <div v-if="isArchived"
+                    class="absolute inset-0 bg-slate-50/50 dark:bg-slate-900/50 z-10 flex items-center justify-center backdrop-blur-[1px] rounded-3xl pointer-events-none">
+                    <div
+                        class="bg-white dark:bg-slate-800 px-6 py-3 rounded-full shadow-2xl border border-slate-200 dark:border-slate-700 font-bold text-slate-500 flex items-center gap-2">
                         <i class="fa-solid fa-lock"></i> 專案已結案 (唯讀)
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
                     <div :class="[themeClasses.innerCard, 'p-5 rounded-2xl border shadow-sm']">
-                        <h3 class="text-xs font-black opacity-50 uppercase tracking-widest mb-4 flex items-center gap-2"><i class="fa-solid fa-users text-indigo-500"></i> 利害關係人</h3>
-                        <input v-model="activeProject.org" placeholder="客戶 / 單位名稱" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded px-3 py-2 text-sm font-bold outline-none mb-3">
+                        <h3
+                            class="text-xs font-black opacity-50 uppercase tracking-widest mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-users text-indigo-500"></i> 利害關係人
+                        </h3>
+                        <input v-model="activeProject.org" placeholder="客戶 / 單位名稱"
+                            class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded px-3 py-2 text-sm font-bold outline-none mb-3">
                         <div class="space-y-2 max-h-40 overflow-y-auto custom-scroll pr-1">
                             <div v-for="(contact, cIdx) in activeProject.contacts" :key="cIdx" class="flex gap-2">
-                                <input v-model="contact.name" placeholder="姓名" class="w-1/3 bg-transparent border-b border-slate-200 text-xs py-1 outline-none">
-                                <input v-model="contact.info" placeholder="資訊" class="flex-1 bg-transparent border-b border-slate-200 text-xs py-1 outline-none">
-                                <button @click="removeContact(cIdx)" class="text-slate-300 hover:text-rose-500"><i class="fa-solid fa-xmark"></i></button>
+                                <input v-model="contact.name" placeholder="姓名"
+                                    class="w-1/3 bg-transparent border-b border-slate-200 text-xs py-1 outline-none">
+                                <input v-model="contact.info" placeholder="資訊"
+                                    class="flex-1 bg-transparent border-b border-slate-200 text-xs py-1 outline-none">
+                                <button @click="removeContact(cIdx)" class="text-slate-300 hover:text-rose-500"><i
+                                        class="fa-solid fa-xmark"></i></button>
                             </div>
                         </div>
                         <button @click="addContact" class="text-indigo-500 font-bold text-xs mt-3">+ 新增關係人</button>
                     </div>
 
-                    <div :class="[themeClasses.innerCard, 'p-5 rounded-2xl border shadow-sm bg-rose-50/30 dark:bg-rose-900/10 border-rose-100 dark:border-rose-900/30']">
-                        <h3 class="text-xs font-black opacity-50 uppercase tracking-widest mb-4 flex items-center gap-2 text-rose-600"><i class="fa-solid fa-fire-extinguisher"></i> 風險與議題</h3>
+                    <div
+                        :class="[themeClasses.innerCard, 'p-5 rounded-2xl border shadow-sm bg-rose-50/30 dark:bg-rose-900/10 border-rose-100 dark:border-rose-900/30']">
+                        <h3
+                            class="text-xs font-black opacity-50 uppercase tracking-widest mb-4 flex items-center gap-2 text-rose-600">
+                            <i class="fa-solid fa-fire-extinguisher"></i> 風險與議題
+                        </h3>
                         <div class="space-y-3 max-h-40 overflow-y-auto custom-scroll pr-1">
-                            <div v-for="(risk, rIdx) in activeProject.risks" :key="rIdx" class="bg-white dark:bg-slate-800 p-3 rounded-xl border border-rose-100 dark:border-rose-900/50 shadow-sm group">
+                            <div v-for="(risk, rIdx) in activeProject.risks" :key="rIdx"
+                                class="bg-white dark:bg-slate-800 p-3 rounded-xl border border-rose-100 dark:border-rose-900/50 shadow-sm group">
                                 <div class="flex justify-between items-center mb-1">
-                                    <select v-model="risk.level" :class="getRiskLevelClass(risk.level)" class="text-[10px] font-black uppercase px-2 py-0.5 rounded outline-none border-none cursor-pointer"><option value="high">高</option><option value="med">中</option><option value="low">低</option></select>
-                                    <button @click="removeRisk(rIdx)" class="text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100"><i class="fa-solid fa-xmark"></i></button>
+                                    <select v-model="risk.level" :class="getRiskLevelClass(risk.level)"
+                                        class="text-[10px] font-black uppercase px-2 py-0.5 rounded outline-none border-none cursor-pointer">
+                                        <option value="high">高</option>
+                                        <option value="med">中</option>
+                                        <option value="low">低</option>
+                                    </select>
+                                    <button @click="removeRisk(rIdx)"
+                                        class="text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100"><i
+                                            class="fa-solid fa-xmark"></i></button>
                                 </div>
-                                <input v-model="risk.desc" placeholder="風險內容..." class="w-full bg-transparent text-xs font-bold outline-none mb-1">
-                                <input v-model="risk.action" placeholder="→ 緩解對策" class="w-full bg-transparent text-[10px] text-slate-500 outline-none">
+                                <input v-model="risk.desc" placeholder="風險內容..."
+                                    class="w-full bg-transparent text-xs font-bold outline-none mb-1">
+                                <input v-model="risk.action" placeholder="→ 緩解對策"
+                                    class="w-full bg-transparent text-[10px] text-slate-500 outline-none">
                             </div>
                         </div>
                         <button @click="addRisk" class="text-rose-500 font-bold text-xs mt-3">+ 新增風險</button>
@@ -247,44 +383,67 @@
 
                 <div class="flex justify-between items-center mb-6">
                     <h3 class="font-black text-lg text-slate-700 dark:text-slate-200">專案里程碑 & 任務</h3>
-                    <button @click="addActivity" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-500 shadow-lg font-bold text-xs flex items-center gap-2"><i class="fa-solid fa-plus"></i> 新增任務</button>
+                    <button @click="addActivity"
+                        class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-500 shadow-lg font-bold text-xs flex items-center gap-2"><i
+                            class="fa-solid fa-plus"></i> 新增任務</button>
                 </div>
-                
+
                 <div class="space-y-4">
-                    <div v-for="(act, idx) in sortedActivities" :key="act.id" :class="[themeClasses.innerCard, 'p-4 rounded-2xl border transition-all hover:shadow-md flex flex-col xl:flex-row gap-4 items-start xl:items-center']">
+                    <div v-for="(act, idx) in sortedActivities" :key="act.id"
+                        :class="[themeClasses.innerCard, 'p-4 rounded-2xl border transition-all hover:shadow-md flex flex-col xl:flex-row gap-4 items-start xl:items-center']">
                         <div class="relative group/status shrink-0">
-                            <button :class="['w-32 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border flex items-center justify-center gap-2', getStatusBtnClass(act.status)]">
+                            <button
+                                :class="['w-32 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border flex items-center justify-center gap-2', getStatusBtnClass(act.status)]">
                                 <i :class="statusIcon(act.status)"></i> {{ statusText(act.status) }}
                             </button>
-                            <div class="absolute top-full left-0 w-36 bg-white dark:bg-slate-800 shadow-xl rounded-xl hidden group-hover/status:block z-50 border border-slate-100 dark:border-slate-600 mt-1">
-                                <div v-for="s in ['pending','ontrack','risk','blocked','done']" :key="s" @click="act.status = s" class="px-3 py-2 text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer flex items-center gap-2 text-slate-600 dark:text-slate-300">
-                                     <div :class="['w-2 h-2 rounded-full', getStatusDot(s)]"></div> {{ statusText(s) }}
+                            <div
+                                class="absolute top-full left-0 w-36 bg-white dark:bg-slate-800 shadow-xl rounded-xl hidden group-hover/status:block z-50 border border-slate-100 dark:border-slate-600 mt-1">
+                                <div v-for="s in ['pending','ontrack','risk','blocked','done']" :key="s"
+                                    @click="act.status = s"
+                                    class="px-3 py-2 text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer flex items-center gap-2 text-slate-600 dark:text-slate-300">
+                                    <div :class="['w-2 h-2 rounded-full', getStatusDot(s)]"></div> {{ statusText(s) }}
                                 </div>
                             </div>
                         </div>
                         <div class="flex gap-2 shrink-0">
-                            <input type="date" v-model="act.date" class="bg-slate-100 dark:bg-slate-900 border-transparent focus:border-indigo-500 rounded px-2 py-1.5 text-xs font-bold outline-none text-slate-600 dark:text-slate-300">
-                            <select v-model="act.type" class="bg-slate-100 dark:bg-slate-900 rounded px-2 py-1.5 text-xs font-bold outline-none border-transparent focus:border-indigo-500 text-slate-600 dark:text-slate-300"><option value="activity">任務</option><option value="deadline">里程碑</option></select>
+                            <input type="date" v-model="act.date"
+                                class="bg-slate-100 dark:bg-slate-900 border-transparent focus:border-indigo-500 rounded px-2 py-1.5 text-xs font-bold outline-none text-slate-600 dark:text-slate-300">
+                            <select v-model="act.type"
+                                class="bg-slate-100 dark:bg-slate-900 rounded px-2 py-1.5 text-xs font-bold outline-none border-transparent focus:border-indigo-500 text-slate-600 dark:text-slate-300">
+                                <option value="activity">任務</option>
+                                <option value="deadline">里程碑</option>
+                            </select>
                         </div>
                         <div class="shrink-0 relative">
-                            <i class="fa-solid fa-user text-slate-300 absolute left-2 top-1/2 -translate-y-1/2 text-[10px]"></i>
-                            <input v-model="act.owner" placeholder="負責人" class="w-24 pl-6 pr-2 py-1.5 bg-transparent border-b border-slate-200 focus:border-indigo-500 text-xs font-bold outline-none text-center">
+                            <i
+                                class="fa-solid fa-user text-slate-300 absolute left-2 top-1/2 -translate-y-1/2 text-[10px]"></i>
+                            <input v-model="act.owner" placeholder="負責人"
+                                class="w-24 pl-6 pr-2 py-1.5 bg-transparent border-b border-slate-200 focus:border-indigo-500 text-xs font-bold outline-none text-center">
                         </div>
                         <div class="flex-1 w-full">
-                            <input v-model="act.name" placeholder="任務名稱" :class="[act.status === 'done' ? 'line-through opacity-50' : '', 'w-full bg-transparent text-sm font-bold outline-none border-b border-transparent focus:border-indigo-500']">
+                            <input v-model="act.name" placeholder="任務名稱"
+                                :class="[act.status === 'done' ? 'line-through opacity-50' : '', 'w-full bg-transparent text-sm font-bold outline-none border-b border-transparent focus:border-indigo-500']">
                         </div>
                         <div class="flex items-center gap-3 shrink-0 ml-auto xl:ml-0">
-                            <button @click="act.showNote = !act.showNote" :class="[act.note ? 'text-amber-500' : 'text-slate-300 hover:text-slate-500']"><i class="fa-solid fa-note-sticky"></i></button>
-                            <button @click="removeActivity(idx)" class="text-slate-300 hover:text-rose-500 w-6 h-6 flex items-center justify-center rounded"><i class="fa-solid fa-xmark"></i></button>
+                            <button @click="act.showNote = !act.showNote"
+                                :class="[act.note ? 'text-amber-500' : 'text-slate-300 hover:text-slate-500']"><i
+                                    class="fa-solid fa-note-sticky"></i></button>
+                            <button @click="removeActivity(idx)"
+                                class="text-slate-300 hover:text-rose-500 w-6 h-6 flex items-center justify-center rounded"><i
+                                    class="fa-solid fa-xmark"></i></button>
                         </div>
-                        <div v-if="act.showNote" class="w-full mt-2 pt-2 border-t border-slate-100 dark:border-slate-700/50">
-                            <textarea v-model="act.note" class="w-full h-20 bg-slate-50 dark:bg-slate-900 rounded-lg p-3 text-xs outline-none border border-slate-200 resize-none" placeholder="備註..."></textarea>
+                        <div v-if="act.showNote"
+                            class="w-full mt-2 pt-2 border-t border-slate-100 dark:border-slate-700/50">
+                            <textarea v-model="act.note"
+                                class="w-full h-20 bg-slate-50 dark:bg-slate-900 rounded-lg p-3 text-xs outline-none border border-slate-200 resize-none"
+                                placeholder="備註..."></textarea>
                         </div>
                     </div>
                 </div>
             </article>
 
-            <div v-else class="lg:col-span-9 flex flex-col items-center justify-center text-center opacity-30 h-[600px] border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-3xl">
+            <div v-else
+                class="lg:col-span-9 flex flex-col items-center justify-center text-center opacity-30 h-[600px] border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-3xl">
                 <i class="fa-solid fa-arrow-left text-6xl mb-4 text-slate-400"></i>
                 <p class="text-xl font-bold">請從左側列表選擇專案</p>
             </div>
@@ -294,46 +453,80 @@
         <main v-if="currentTab === 'report'" class="animate-fade-in">
             <div v-if="!activeProject" class="text-center p-20 opacity-30 font-bold text-2xl">請先選擇一個專案</div>
             <article v-else :class="[themeClasses.card, 'p-8 md:p-12 rounded-3xl shadow-xl border print-area']">
-                <div class="flex justify-between items-start mb-10 pb-6 border-b-4 border-slate-100 dark:border-slate-700">
+                <div
+                    class="flex justify-between items-start mb-10 pb-6 border-b-4 border-slate-100 dark:border-slate-700">
                     <div>
                         <h2 class="text-4xl font-black mb-2">{{ activeProject.name }}</h2>
-                        <div class="text-sm opacity-60 font-bold uppercase tracking-wide">{{ activeProject.org || '未設定' }} | 2026 執行報告</div>
+                        <div class="text-sm opacity-60 font-bold uppercase tracking-wide">{{ activeProject.org || '未設定'
+                            }} | 2026 執行報告</div>
                     </div>
                     <div class="flex gap-2">
-                        <button @click="exportToExcel" class="no-print px-6 py-3 bg-emerald-600 text-white rounded-xl font-bold shadow hover:bg-emerald-700 text-sm flex items-center gap-2"><i class="fa-solid fa-file-excel"></i>匯出 Excel</button>
-                        <button @click="window.print()" class="no-print px-6 py-3 bg-slate-800 text-white rounded-xl font-bold shadow hover:bg-slate-700 text-sm flex items-center gap-2"><i class="fa-solid fa-print"></i>列印</button>
+                        <button @click="exportToExcel"
+                            class="no-print px-6 py-3 bg-emerald-600 text-white rounded-xl font-bold shadow hover:bg-emerald-700 text-sm flex items-center gap-2"><i
+                                class="fa-solid fa-file-excel"></i>匯出 Excel</button>
+                        <button @click="window.print()"
+                            class="no-print px-6 py-3 bg-slate-800 text-white rounded-xl font-bold shadow hover:bg-slate-700 text-sm flex items-center gap-2"><i
+                                class="fa-solid fa-print"></i>列印</button>
                     </div>
                 </div>
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
-                    <div class="bg-slate-50 dark:bg-slate-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700 text-center">
+                    <div
+                        class="bg-slate-50 dark:bg-slate-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700 text-center">
                         <div class="text-[10px] font-black uppercase text-slate-400 mb-1">總體進度</div>
-                        <div class="text-3xl font-black text-indigo-600">{{ calculateProgress(activeProject) }}<span class="text-sm align-top">%</span></div>
+                        <div class="text-3xl font-black text-indigo-600">{{ calculateProgress(activeProject) }}<span
+                                class="text-sm align-top">%</span></div>
                     </div>
-                    <div class="bg-rose-50 dark:bg-rose-900/10 p-5 rounded-2xl border border-rose-100 dark:border-rose-900/30 text-center">
+                    <div
+                        class="bg-rose-50 dark:bg-rose-900/10 p-5 rounded-2xl border border-rose-100 dark:border-rose-900/30 text-center">
                         <div class="text-[10px] font-black uppercase text-rose-400 mb-1">卡關項目</div>
-                        <div class="text-3xl font-black text-rose-500">{{ activeProject.activities.filter(a => a.status === 'blocked').length }}</div>
+                        <div class="text-3xl font-black text-rose-500">{{ activeProject.activities.filter(a => a.status
+                            === 'blocked').length }}</div>
                     </div>
-                    <div class="bg-slate-50 dark:bg-slate-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700 text-center">
+                    <div
+                        class="bg-slate-50 dark:bg-slate-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700 text-center">
                         <div class="text-[10px] font-black uppercase text-slate-400 mb-1">待辦/進行中</div>
-                        <div class="text-3xl font-black text-slate-700 dark:text-slate-200">{{ activeProject.activities.filter(a => ['pending','ontrack','risk'].includes(a.status)).length }}</div>
+                        <div class="text-3xl font-black text-slate-700 dark:text-slate-200">{{
+                            activeProject.activities.filter(a => ['pending','ontrack','risk'].includes(a.status)).length
+                            }}</div>
                     </div>
-                    <div class="bg-slate-50 dark:bg-slate-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700 text-center relative overflow-hidden">
+                    <div
+                        class="bg-slate-50 dark:bg-slate-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700 text-center relative overflow-hidden">
                         <div class="text-[10px] font-black uppercase text-slate-400 mb-1">風險指數</div>
-                        <div :class="['text-3xl font-black', getRiskLevelColor(getRiskScore(activeProject))]">{{ getRiskScore(activeProject) }}</div>
-                        <div :class="['absolute bottom-0 left-0 h-1 w-full', getRiskLevelColorBg(getRiskScore(activeProject))]"></div>
+                        <div :class="['text-3xl font-black', getRiskLevelColor(getRiskScore(activeProject))]">{{
+                            getRiskScore(activeProject) }}</div>
+                        <div
+                            :class="['absolute bottom-0 left-0 h-1 w-full', getRiskLevelColorBg(getRiskScore(activeProject))]">
+                        </div>
                     </div>
                 </div>
                 <div class="space-y-8">
                     <h4 class="text-xs font-black opacity-40 uppercase border-b pb-2">執行明細</h4>
                     <div v-for="month in 12" :key="month" class="flex gap-6 break-inside-avoid">
-                        <div class="w-12 text-center shrink-0 pt-1"><div class="text-2xl font-black opacity-20">{{ month }}<span class="text-xs ml-0.5">月</span></div></div>
+                        <div class="w-12 text-center shrink-0 pt-1">
+                            <div class="text-2xl font-black opacity-20">{{ month }}<span class="text-xs ml-0.5">月</span>
+                            </div>
+                        </div>
                         <div class="flex-1 border-l-2 border-slate-100 dark:border-slate-700 pl-6 space-y-4 pb-6">
-                            <div v-for="act in getActivitiesByMonth(month)" :key="act.id" class="flex items-start gap-4 p-4 rounded-xl border border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800/30">
-                                <div class="shrink-0 mt-1"><div :class="['w-2 h-2 rounded-full', getStatusDot(act.status)]"></div></div>
+                            <div v-for="act in getActivitiesByMonth(month)" :key="act.id"
+                                class="flex items-start gap-4 p-4 rounded-xl border border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800/30">
+                                <div class="shrink-0 mt-1">
+                                    <div :class="['w-2 h-2 rounded-full', getStatusDot(act.status)]"></div>
+                                </div>
                                 <div class="flex-1">
-                                    <div class="flex justify-between items-start"><div :class="['font-bold text-base', act.status === 'done' ? 'line-through opacity-40' : '']">{{ act.name }}</div><div class="text-[10px] font-black bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded text-slate-500">{{ dayjs(act.date).format('MM/DD') }}</div></div>
-                                    <div class="flex gap-4 mt-1 text-xs text-slate-500"><span v-if="act.owner"><i class="fa-solid fa-user text-[10px]"></i> {{ act.owner }}</span><span :class="['font-bold uppercase', getStatusTextColor(act.status)]">{{ statusText(act.status) }}</span></div>
-                                    <div v-if="act.note" class="mt-2 text-xs opacity-70 border-l-2 pl-2">{{ act.note }}</div>
+                                    <div class="flex justify-between items-start">
+                                        <div
+                                            :class="['font-bold text-base', act.status === 'done' ? 'line-through opacity-40' : '']">
+                                            {{ act.name }}</div>
+                                        <div
+                                            class="text-[10px] font-black bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded text-slate-500">
+                                            {{ dayjs(act.date).format('MM/DD') }}</div>
+                                    </div>
+                                    <div class="flex gap-4 mt-1 text-xs text-slate-500"><span v-if="act.owner"><i
+                                                class="fa-solid fa-user text-[10px]"></i> {{ act.owner }}</span><span
+                                            :class="['font-bold uppercase', getStatusTextColor(act.status)]">{{
+                                            statusText(act.status) }}</span></div>
+                                    <div v-if="act.note" class="mt-2 text-xs opacity-70 border-l-2 pl-2">{{ act.note }}
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -347,12 +540,13 @@
             <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
                 <!-- 範本列表 -->
                 <aside class="lg:col-span-1 space-y-4">
-                    <button @click="createNewTemplate" class="w-full py-4 bg-amber-500 text-white rounded-2xl shadow-lg hover:bg-amber-600 transition-all font-black text-sm flex items-center justify-center gap-2">
+                    <button @click="createNewTemplate"
+                        class="w-full py-4 bg-amber-500 text-white rounded-2xl shadow-lg hover:bg-amber-600 transition-all font-black text-sm flex items-center justify-center gap-2">
                         <i class="fa-solid fa-plus"></i> 新增空白範本
                     </button>
                     <div class="space-y-3 overflow-y-auto pr-1 h-[calc(100vh-250px)]">
-                        <div v-for="t in templates" :key="t.id" @click="selectedTplId = t.id" 
-                             :class="['p-4 rounded-2xl cursor-pointer transition-all border-l-4 shadow-sm', selectedTplId === t.id ? 'bg-amber-50 border-amber-500 text-amber-900' : 'bg-white border-transparent opacity-60 hover:opacity-100']">
+                        <div v-for="t in templates" :key="t.id" @click="selectedTplId = t.id"
+                            :class="['p-4 rounded-2xl cursor-pointer transition-all border-l-4 shadow-sm', selectedTplId === t.id ? 'bg-amber-50 border-amber-500 text-amber-900' : 'bg-white border-transparent opacity-60 hover:opacity-100']">
                             <div class="font-bold text-sm">{{ t.name }}</div>
                             <div class="text-[10px] opacity-60 mt-1">{{ t.activities.length }} 節點</div>
                         </div>
@@ -360,221 +554,71 @@
                 </aside>
 
                 <!-- 範本編輯區 -->
-                <article v-if="activeTemplate" :class="[themeClasses.card, 'lg:col-span-3 p-8 rounded-3xl shadow-xl border transition-theme relative']">
+                <article v-if="activeTemplate"
+                    :class="[themeClasses.card, 'lg:col-span-3 p-8 rounded-3xl shadow-xl border transition-theme relative']">
                     <div class="absolute top-0 left-0 w-full h-1 bg-amber-400 rounded-t-3xl"></div>
                     <div class="flex justify-between items-start mb-8 pb-4 border-b border-slate-100">
                         <div class="w-full mr-10">
                             <label class="text-xs font-bold text-amber-500 uppercase mb-1 block">範本名稱</label>
-                            <input v-model="activeTemplate.name" class="text-2xl font-black bg-transparent outline-none w-full">
+                            <input v-model="activeTemplate.name"
+                                class="text-2xl font-black bg-transparent outline-none w-full">
                         </div>
-                        <button @click="deleteTemplate" class="text-rose-400 hover:text-rose-600 text-sm font-bold shrink-0"><i class="fa-solid fa-trash-can mr-1"></i> 刪除範本</button>
+                        <button @click="deleteTemplate"
+                            class="text-rose-400 hover:text-rose-600 text-sm font-bold shrink-0"><i
+                                class="fa-solid fa-trash-can mr-1"></i> 刪除範本</button>
                     </div>
                     <div class="grid grid-cols-2 gap-6 mb-8">
-                         <div :class="[themeClasses.innerCard, 'p-4 rounded-xl border']">
+                        <div :class="[themeClasses.innerCard, 'p-4 rounded-xl border']">
                             <h4 class="text-xs font-bold mb-2">預設風險</h4>
                             <div class="space-y-2 max-h-40 overflow-y-auto custom-scroll">
-                                <div v-for="(r, i) in activeTemplate.risks" class="bg-white p-2 rounded border flex justify-between text-xs"><span>{{ r.desc }}</span><button @click="activeTemplate.risks.splice(i,1)" class="text-rose-400">×</button></div>
+                                <div v-for="(r, i) in activeTemplate.risks"
+                                    class="bg-white p-2 rounded border flex justify-between text-xs"><span>{{ r.desc
+                                        }}</span><button @click="activeTemplate.risks.splice(i,1)"
+                                        class="text-rose-400">×</button></div>
                             </div>
-                            <button @click="activeTemplate.risks.push({level:'med',desc:'新風險',action:''})" class="text-xs text-indigo-500 font-bold mt-2">+ 加風險</button>
+                            <button @click="activeTemplate.risks.push({level:'med',desc:'新風險',action:''})"
+                                class="text-xs text-indigo-500 font-bold mt-2">+ 加風險</button>
                         </div>
-                         <div :class="[themeClasses.innerCard, 'p-4 rounded-xl border']">
+                        <div :class="[themeClasses.innerCard, 'p-4 rounded-xl border']">
                             <h4 class="text-xs font-bold mb-2">預設關係人</h4>
                             <div class="space-y-2 max-h-40 overflow-y-auto custom-scroll">
-                                <div v-for="(c, i) in activeTemplate.contacts" class="bg-white p-2 rounded border flex justify-between text-xs"><span>{{ c.name }} - {{ c.info }}</span><button @click="activeTemplate.contacts.splice(i,1)" class="text-rose-400">×</button></div>
+                                <div v-for="(c, i) in activeTemplate.contacts"
+                                    class="bg-white p-2 rounded border flex justify-between text-xs"><span>{{ c.name }}
+                                        - {{ c.info }}</span><button @click="activeTemplate.contacts.splice(i,1)"
+                                        class="text-rose-400">×</button></div>
                             </div>
-                            <button @click="activeTemplate.contacts.push({name:'新角色',info:''})" class="text-xs text-indigo-500 font-bold mt-2">+ 加角色</button>
+                            <button @click="activeTemplate.contacts.push({name:'新角色',info:''})"
+                                class="text-xs text-indigo-500 font-bold mt-2">+ 加角色</button>
                         </div>
                     </div>
                     <h4 class="font-bold text-lg mb-4">預設任務節點</h4>
                     <div class="space-y-2">
-                        <div v-for="(act, i) in activeTemplate.activities" :key="i" class="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
-                             <input type="date" v-model="act.date" class="bg-white border rounded px-2 py-1 text-xs w-28">
-                             <select v-model="act.type" class="bg-white border rounded px-2 py-1 text-xs"><option value="activity">任務</option><option value="deadline">里程碑</option></select>
-                             <input v-model="act.name" class="flex-1 bg-transparent border-b border-transparent focus:border-indigo-300 outline-none text-sm font-bold">
-                             <input v-model="act.owner" placeholder="預設負責人" class="w-20 bg-transparent border-b border-transparent focus:border-indigo-300 outline-none text-xs text-center">
-                             <button @click="activeTemplate.activities.splice(i,1)" class="text-slate-300 hover:text-rose-500">×</button>
+                        <div v-for="(act, i) in activeTemplate.activities" :key="i"
+                            class="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                            <input type="date" v-model="act.date"
+                                class="bg-white border rounded px-2 py-1 text-xs w-28">
+                            <select v-model="act.type" class="bg-white border rounded px-2 py-1 text-xs">
+                                <option value="activity">任務</option>
+                                <option value="deadline">里程碑</option>
+                            </select>
+                            <input v-model="act.name"
+                                class="flex-1 bg-transparent border-b border-transparent focus:border-indigo-300 outline-none text-sm font-bold">
+                            <input v-model="act.owner" placeholder="預設負責人"
+                                class="w-20 bg-transparent border-b border-transparent focus:border-indigo-300 outline-none text-xs text-center">
+                            <button @click="activeTemplate.activities.splice(i,1)"
+                                class="text-slate-300 hover:text-rose-500">×</button>
                         </div>
-                        <button @click="addTemplateActivity" class="w-full py-2 border-2 border-dashed border-slate-200 rounded-xl text-slate-400 text-xs font-bold hover:border-amber-400 hover:text-amber-500">+ 新增節點</button>
+                        <button @click="addTemplateActivity"
+                            class="w-full py-2 border-2 border-dashed border-slate-200 rounded-xl text-slate-400 text-xs font-bold hover:border-amber-400 hover:text-amber-500">+
+                            新增節點</button>
                     </div>
                 </article>
             </div>
         </main>
     </div>
 
-    <script>
-        const { createApp } = Vue;
-        const DEFAULT_TEMPLATE = {
-            id: 'tpl_2026_std',
-            name: '2026 軟體專案標準範本',
-            org: '範本客戶',
-            contacts: [{name: 'PM', info: '專案經理'}, {name: 'PG', info: '開發人員'}],
-            risks: [{level: 'high', desc: '需求變更頻繁', action: '建立變更管理流程'}, {level: 'med', desc: '技術債累積', action: '每週安排 Refactor 時間'}],
-            activities: [
-                { id: 1, date: '2026-01-10', name: '專案啟動 (Kick-off)', status: 'pending', owner: 'PM', type: 'deadline', note: '', showNote: false },
-                { id: 2, date: '2026-03-31', name: '需求規格書確認', status: 'pending', owner: 'SA', type: 'deadline', note: '', showNote: false },
-                { id: 3, date: '2026-06-30', name: '期中報告', status: 'pending', owner: 'PM', type: 'deadline', note: '', showNote: false },
-                { id: 4, date: '2026-09-15', name: 'UAT 測試', status: 'pending', owner: 'QA', type: 'activity', note: '', showNote: false },
-                { id: 5, date: '2026-12-20', name: '結案驗收', status: 'pending', owner: 'PM', type: 'deadline', note: '', showNote: false }
-            ]
-        };
-
-        createApp({
-            data() {
-                return {
-                    theme: localStorage.getItem('pm-theme') || 'light',
-                    currentTab: 'project',
-                    selectedPid: null,
-                    selectedTplId: null,
-                    showToast: false,
-                    toastMessage: '',
-                    listFilter: 'active',
-                    showNewProjectModal: false,
-                    projects: JSON.parse(localStorage.getItem('pm-projects-v2')) || [],
-                    templates: JSON.parse(localStorage.getItem('pm-templates-v1')) || [JSON.parse(JSON.stringify(DEFAULT_TEMPLATE))],
-                    tabs: [
-                        {id:'time',n:'年度全覽',icon:'fa-calendar-days'},
-                        {id:'project',n:'專案管理',icon:'fa-list-check'},
-                        {id:'report',n:'報告 & 儀表板',icon:'fa-chart-pie'},
-                        {id:'template',n:'範本管理',icon:'fa-copy'}
-                    ]
-                }
-            },
-            computed: {
-                filteredProjects() { const status = this.listFilter === 'active' ? ['active', undefined] : ['completed']; return this.projects.filter(p => status.includes(p.status)); },
-                activeProjects() { return this.projects.filter(p => p.status !== 'completed'); },
-                activeProject() { return this.projects.find(p => p.id === this.selectedPid); },
-                sortedActivities() { return this.activeProject?.activities.sort((a,b) => dayjs(a.date).diff(dayjs(b.date))) || []; },
-                isArchived() { return this.activeProject?.status === 'completed'; },
-                activeTemplate() { return this.templates.find(t => t.id === this.selectedTplId); },
-                today() { return dayjs().format('YYYY-MM-DD'); },
-                isCurrentYear() { return dayjs().year() === 2026; },
-                themeClasses() {
-                    const isDark = this.theme === 'dark';
-                    return {
-                        body: isDark ? 'bg-[#0f172a] text-slate-300' : 'bg-slate-50 text-slate-700',
-                        card: isDark ? 'bg-[#1e293b] border-slate-700' : 'bg-white border-slate-200',
-                        brand: isDark ? 'text-white' : 'text-slate-800',
-                        innerCard: isDark ? 'bg-[#0f172a] border-slate-700' : 'bg-slate-50 border-slate-100',
-                        activeItem: isDark ? 'bg-indigo-900/30 border-indigo-500 text-indigo-200' : 'bg-white border-indigo-500 text-indigo-700 shadow-md',
-                        inactiveItem: isDark ? 'border-transparent opacity-60 hover:bg-slate-800' : 'border-transparent opacity-60 hover:bg-white hover:shadow-sm'
-                    };
-                }
-            },
-            watch: {
-                projects: { handler(val) { localStorage.setItem('pm-projects-v2', JSON.stringify(val)); }, deep: true },
-                templates: { handler(val) { localStorage.setItem('pm-templates-v1', JSON.stringify(val)); }, deep: true }
-            },
-            methods: {
-                dayjs,
-                setTheme(t) { this.theme = t; localStorage.setItem('pm-theme', t); },
-                createFromTemplate(tpl) {
-                    const id = Date.now();
-                    let newProject = {
-                        id,
-                        name: tpl ? `${tpl.name} (Copy)` : '新專案',
-                        org: tpl ? tpl.org : '',
-                        status: 'active',
-                        contacts: tpl ? JSON.parse(JSON.stringify(tpl.contacts)) : [],
-                        risks: tpl ? JSON.parse(JSON.stringify(tpl.risks)) : [],
-                        activities: []
-                    };
-                    if (tpl && tpl.activities) {
-                        newProject.activities = tpl.activities.map(a => ({ ...a, id: id + Math.random(), status: 'pending' }));
-                    }
-                    this.projects.unshift(newProject);
-                    this.selectedPid = id;
-                    this.listFilter = 'active';
-                    this.showNewProjectModal = false;
-                    this.showToastMsg('專案建立成功！');
-                },
-                saveAsTemplate() {
-                    if (!this.activeProject) return;
-                    if (!confirm('確定要將目前的專案結構另存為新範本嗎？\n(將複製里程碑、風險與關係人結構，但會重置進度)')) return;
-                    const p = this.activeProject;
-                    const newTpl = {
-                        id: Date.now(),
-                        name: `[範本] ${p.name}`,
-                        org: p.org || '',
-                        contacts: JSON.parse(JSON.stringify(p.contacts)),
-                        risks: JSON.parse(JSON.stringify(p.risks)),
-                        activities: p.activities.map(a => ({ ...a, id: Date.now() + Math.random(), status: 'pending', note: '', showNote: false }))
-                    };
-                    this.templates.unshift(newTpl);
-                    this.showToastMsg('已成功建立範本！請至「範本管理」查看');
-                },
-                toggleProjectStatus() {
-                    if (!this.activeProject) return;
-                    const isComplete = this.activeProject.status === 'completed';
-                    if (confirm(isComplete ? '確定要重新啟動此專案？' : '確定要將此專案結案歸檔？')) {
-                        this.activeProject.status = isComplete ? 'active' : 'completed';
-                        this.listFilter = this.activeProject.status;
-                        this.showToastMsg(isComplete ? '專案已重啟' : '專案已歸檔');
-                    }
-                },
-                deleteProject() { if (confirm('⚠️ 確定刪除？')) { this.projects = this.projects.filter(p => p.id !== this.selectedPid); this.selectedPid = null; } },
-                createNewTemplate() { const id = Date.now(); this.templates.unshift({ id, name: '新範本', org: '', contacts: [], risks: [], activities: [] }); this.selectedTplId = id; },
-                addTemplateActivity() { if(!this.activeTemplate) return; this.activeTemplate.activities.push({ id: Date.now(), date: '2026-01-01', name: '新節點', type: 'activity', owner: '', status: 'pending', showNote: false }); },
-                deleteTemplate() { if (confirm('確定刪除此範本？')) { this.templates = this.templates.filter(t => t.id !== this.selectedTplId); this.selectedTplId = null; } },
-                addActivity() { this.activeProject.activities.push({ id: Date.now(), name: '', date: dayjs().year(2026).format('YYYY-MM-DD'), status: 'pending', owner: '', type: 'activity', note: '', showNote: false }); },
-                removeActivity(idx) { this.activeProject.activities.splice(idx, 1); },
-                addContact() { this.activeProject.contacts.push({ name: '', info: '' }); },
-                removeContact(i) { this.activeProject.contacts.splice(i, 1); },
-                addRisk() { if(!this.activeProject.risks) this.activeProject.risks=[]; this.activeProject.risks.push({ level: 'med', desc: '', action: '' }); },
-                removeRisk(i) { this.activeProject.risks.splice(i, 1); },
-                getYearPos(date) { return Math.max(0, Math.min(100, (dayjs(date).diff(dayjs('2026-01-01'), 'day') / 365) * 100)); },
-                calculateProgress(p) { if (!p || !p.activities.length) return 0; return Math.round((p.activities.filter(a => a.status === 'done').length / p.activities.length) * 100); },
-                getRiskCount(p) { return { blocked: p.activities.filter(a => a.status === 'blocked').length }; },
-                getRiskScore(p) { return p.activities.filter(a=>a.status==='blocked').length > 0 ? 'HIGH' : 'LOW'; },
-                statusText(s) { const map = { pending:'待辦', ontrack:'正常', risk:'風險', blocked:'卡關', done:'完成' }; return map[s] || '待辦'; },
-                statusIcon(s) { const map = { pending:'fa-regular fa-circle', ontrack:'fa-solid fa-play', risk:'fa-solid fa-triangle-exclamation', blocked:'fa-solid fa-ban', done:'fa-solid fa-check' }; return map[s]; },
-                getStatusBtnClass(s) { const map = { pending: 'border-slate-300 text-slate-500 bg-slate-50 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-400', ontrack: 'border-emerald-500 text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 dark:text-emerald-400', risk: 'border-amber-500 text-amber-600 bg-amber-50 dark:bg-amber-900/20 dark:text-amber-400', blocked: 'border-rose-500 text-rose-600 bg-rose-50 dark:bg-rose-900/20 dark:text-rose-400 status-blocked', done: 'border-slate-500 text-slate-600 bg-slate-100 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-300' }; return map[s]; },
-                getStatusColorClass(s) { const map = { pending: 'bg-slate-300 border-slate-400', ontrack: 'bg-emerald-500 border-emerald-600', risk: 'bg-amber-400 border-amber-500', blocked: 'bg-rose-500 border-rose-600 status-blocked', done: 'bg-slate-300 border-slate-400 grayscale opacity-50' }; return map[s] || map.pending; },
-                getStatusDot(s) { const map = { pending: 'bg-slate-300', ontrack: 'bg-emerald-500', risk: 'bg-amber-500', blocked: 'bg-rose-500', done: 'bg-slate-700' }; return map[s]; },
-                getStatusTextColor(s) { const map = { pending: 'text-slate-400', ontrack: 'text-emerald-600', risk: 'text-amber-600', blocked: 'text-rose-600', done: 'text-slate-400' }; return map[s]; },
-                getRiskLevelColor(l) { return { HIGH: 'text-rose-500', MED: 'text-amber-500', LOW: 'text-emerald-500' }[l]; },
-                getRiskLevelColorBg(l) { return { HIGH: 'bg-rose-500', MED: 'bg-amber-500', LOW: 'bg-emerald-500' }[l]; },
-                getRiskLevelClass(l) { return { high: 'bg-rose-100 text-rose-600', med: 'bg-amber-100 text-amber-600', low: 'bg-slate-200 text-slate-600' }[l]; },
-                getActivitiesByMonth(m) { if (!this.activeProject) return []; return this.activeProject.activities.filter(a => dayjs(a.date).month() + 1 === m).sort((a,b) => dayjs(a.date).diff(dayjs(b.date))); },
-                
-                // --- EXCEL EXPORT ---
-                exportToExcel() {
-                    if (!this.activeProject) return;
-                    const p = this.activeProject;
-                    const wb = XLSX.utils.book_new();
-
-                    // Sheet 1: 概況
-                    const overviewData = [
-                        ["專案名稱", p.name], ["客戶/單位", p.org],
-                        ["目前狀態", p.status === 'completed' ? '已結案' : '進行中'], ["總體進度", `${this.calculateProgress(p)}%`],
-                        [], ["利害關係人", "資訊"], ...p.contacts.map(c => [c.name, c.info])
-                    ];
-                    const wsOverview = XLSX.utils.aoa_to_sheet(overviewData);
-                    XLSX.utils.book_append_sheet(wb, wsOverview, "專案概況");
-
-                    // Sheet 2: 執行細節
-                    const taskHeader = ["日期", "類型", "名稱", "狀態", "負責人", "備註"];
-                    const taskData = p.activities.map(a => [
-                        a.date, a.type === 'deadline' ? '里程碑' : '任務', a.name, this.statusText(a.status), a.owner, a.note
-                    ]);
-                    const wsTasks = XLSX.utils.aoa_to_sheet([taskHeader, ...taskData]);
-                    XLSX.utils.book_append_sheet(wb, wsTasks, "執行細節");
-
-                    // Sheet 3: 風險日誌
-                    const riskHeader = ["等級", "風險描述", "緩解對策"];
-                    const riskData = p.risks.map(r => [ r.level==='high'?'高':r.level==='med'?'中':'低', r.desc, r.action ]);
-                    const wsRisks = XLSX.utils.aoa_to_sheet([riskHeader, ...riskData]);
-                    XLSX.utils.book_append_sheet(wb, wsRisks, "風險日誌");
-
-                    XLSX.writeFile(wb, `${p.name}_報告.xlsx`);
-                },
-                
-                // --- I/O ---
-                exportData() { const data = { projects: this.projects, templates: this.templates }; const link = document.createElement('a'); link.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data)); link.download = `PM_System_Backup_${dayjs().format('YYYYMMDD')}.json`; link.click(); this.showToastMsg('完整系統備份已下載'); },
-                importData(event) { const reader = new FileReader(); reader.onload = (e) => { try { const data = JSON.parse(e.target.result); if(data.projects) { this.projects = data.projects; this.templates = data.templates || this.templates; } else if (Array.isArray(data)) { this.projects = data; } this.showToastMsg('資料還原成功！'); } catch(err) { alert('檔案格式錯誤'); } event.target.value = ''; }; reader.readAsText(event.target.files[0]); },
-                showToastMsg(msg) { this.toastMessage = msg; this.showToast = true; setTimeout(() => this.showToast = false, 2500); }
-            },
-            mounted() { if(this.projects.length) this.selectedPid = this.projects[0].id; }
-        }).mount('#app')
-    </script>
+    <!-- Vue 應用程式 -->
+    <script src="app.js"></script>
 </body>
+
 </html>
