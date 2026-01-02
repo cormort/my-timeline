@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>專案計畫管理</title>
+    <title> 專案計畫管理</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/dayjs@1/dayjs.min.js"></script>
@@ -35,7 +35,6 @@
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px) translateX(-50%); } to { opacity: 1; transform: translateY(0) translateX(-50%); } }
         .animate-toast { animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
         
-        /* Modal 動畫 */
         .modal-enter-active, .modal-leave-active { transition: opacity 0.3s ease; }
         .modal-enter-from, .modal-leave-to { opacity: 0; }
     </style>
@@ -85,7 +84,7 @@
                     <i class="fa-solid fa-layer-group"></i>
                 </div>
                 <div>
-                    <h1 :class="[themeClasses.brand, 'text-2xl font-black tracking-tight']"> 專案管理助手 <span class="text-xs align-top bg-amber-200 text-amber-800 px-1.5 py-0.5 rounded ml-1">Template Ed.</span></h1>
+                    <h1 :class="[themeClasses.brand, 'text-2xl font-black tracking-tight']">專案計畫管理 <span class="text-xs align-top bg-amber-200 text-amber-800 px-1.5 py-0.5 rounded ml-1">v2026.PLUS</span></h1>
                     <p class="text-sm opacity-50 font-bold">專案組合管理系統 (PPM)</p>
                 </div>
             </div>
@@ -116,12 +115,12 @@
             </button>
         </nav>
 
-        <!-- TAB 1: 年度甘特圖 (Gantt) -->
+        <!-- TAB 1: 年度甘特圖 -->
         <main v-if="currentTab === 'time'" class="animate-fade-in">
             <section :class="[themeClasses.card, 'p-8 rounded-3xl shadow-xl border transition-theme overflow-hidden']">
                 <div class="flex items-center justify-between mb-8">
                     <h2 class="font-black text-xl flex items-center gap-2">
-                        <i class="fa-solid fa-chart-gantt text-indigo-500"></i> 進行中專案全覽 ({{ activeProjects.length }})
+                        <i class="fa-solid fa-chart-gantt text-indigo-500"></i> 進行中專案全覽
                     </h2>
                     <div class="flex gap-4 text-xs font-bold opacity-70">
                         <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> 正常</span>
@@ -129,34 +128,22 @@
                         <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span> 卡關</span>
                     </div>
                 </div>
-
                 <div class="relative overflow-x-auto pb-4">
                     <div class="min-w-[1000px] xl:min-w-full relative">
                         <div class="flex border-b border-slate-200 dark:border-slate-700 mb-6 text-xs font-bold opacity-40">
                             <div v-for="m in 12" :key="m" class="flex-1 text-center py-2">{{m}}月</div>
                         </div>
-                        
-                        <div v-if="activeProjects.length === 0" class="text-center py-12 opacity-30 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-dashed border-slate-300">
-                            目前無進行中的專案
-                        </div>
-
+                        <div v-if="activeProjects.length === 0" class="text-center py-12 opacity-30 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-dashed border-slate-300">目前無進行中的專案</div>
                         <div v-for="p in activeProjects" :key="p.id" class="relative h-16 border-b border-slate-100 dark:border-slate-700/50 flex items-center group hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors px-2">
-                            <div class="absolute left-0 -top-2 z-20">
-                                <span class="text-[10px] font-bold bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded text-slate-500">{{ p.name }}</span>
-                            </div>
+                            <div class="absolute left-0 -top-2 z-20"><span class="text-[10px] font-bold bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded text-slate-500">{{ p.name }}</span></div>
                             <div class="w-full h-1 bg-slate-100 dark:bg-slate-700 rounded-full"></div>
                             <div v-for="act in p.activities" :key="act.id" class="absolute top-1/2 -translate-y-1/2 group/point" :style="{ left: getYearPos(act.date) + '%' }">
-                                <div :class="['cursor-pointer transition-all hover:scale-150 z-10 relative border-2 shadow-sm', 
-                                              act.type === 'deadline' ? 'w-4 h-4 diamond' : 'w-3 h-3 rounded-full',
-                                              getStatusColorClass(act.status)]"
-                                     :title="`${act.date} | ${act.name}`">
+                                <div :class="['cursor-pointer transition-all hover:scale-150 z-10 relative border-2 shadow-sm', act.type === 'deadline' ? 'w-4 h-4 diamond' : 'w-3 h-3 rounded-full', getStatusColorClass(act.status)]" :title="`${act.date} | ${act.name}`">
                                      <i v-if="act.status === 'blocked'" class="fa-solid fa-exclamation text-white text-[8px] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -rotate-45"></i>
                                 </div>
                             </div>
                         </div>
-                        <div v-if="isCurrentYear" class="absolute top-0 bottom-0 w-px border-l-2 border-rose-500/30 border-dashed z-0 pointer-events-none" :style="{ left: getYearPos(today) + '%' }">
-                            <div class="bg-rose-500 text-white text-[9px] px-1.5 py-0.5 rounded absolute -top-5 -left-4 font-bold whitespace-nowrap">TODAY</div>
-                        </div>
+                        <div v-if="isCurrentYear" class="absolute top-0 bottom-0 w-px border-l-2 border-rose-500/30 border-dashed z-0 pointer-events-none" :style="{ left: getYearPos(today) + '%' }"><div class="bg-rose-500 text-white text-[9px] px-1.5 py-0.5 rounded absolute -top-5 -left-4 font-bold whitespace-nowrap">TODAY</div></div>
                     </div>
                 </div>
             </section>
@@ -169,13 +156,10 @@
                 <button @click="showNewProjectModal = true" class="w-full py-4 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white rounded-2xl shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:-translate-y-1 transition-all font-black text-sm flex items-center justify-center gap-2 mb-4 shrink-0">
                     <i class="fa-solid fa-plus"></i> 建立新專案
                 </button>
-                
-                <!-- 狀態切換 Filter -->
                 <div class="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl mb-4 shrink-0">
                     <button @click="listFilter = 'active'" :class="['flex-1 py-1.5 text-xs font-bold rounded-lg transition-all', listFilter === 'active' ? 'bg-white dark:bg-slate-700 shadow text-indigo-600 dark:text-white' : 'text-slate-400']">進行中</button>
                     <button @click="listFilter = 'completed'" :class="['flex-1 py-1.5 text-xs font-bold rounded-lg transition-all', listFilter === 'completed' ? 'bg-white dark:bg-slate-700 shadow text-slate-800 dark:text-white' : 'text-slate-400']">已結案</button>
                 </div>
-
                 <div class="space-y-3 overflow-y-auto pr-1 flex-1">
                     <div v-if="filteredProjects.length === 0" class="text-center py-8 opacity-30 text-xs">沒有{{ listFilter==='active'?'進行中':'已結案' }}的專案</div>
                     <div v-for="p in filteredProjects" :key="p.id" @click="selectedPid = p.id" 
@@ -196,18 +180,21 @@
 
             <!-- 右側編輯區 -->
             <article v-if="activeProject" :class="[themeClasses.card, 'lg:col-span-9 p-6 md:p-10 rounded-3xl shadow-xl border transition-theme relative']">
-                <!-- 封存/結案按鈕 -->
-                <div class="absolute top-6 right-6 z-20">
+                <!-- 右上角工具列 (結案/轉範本) -->
+                <div class="absolute top-6 right-6 z-20 flex gap-2">
+                    <button @click="saveAsTemplate" class="px-3 py-1.5 bg-amber-50 text-amber-600 hover:bg-amber-100 rounded-lg text-xs font-bold transition-all border border-amber-200" title="將此專案結構另存為新範本">
+                        <i class="fa-solid fa-copy mr-1"></i> 轉範本
+                    </button>
                     <button v-if="activeProject.status !== 'completed'" @click="toggleProjectStatus" class="px-3 py-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg text-xs font-bold transition-all border border-emerald-200">
-                        <i class="fa-solid fa-box-archive mr-1"></i> 結案歸檔
+                        <i class="fa-solid fa-box-archive mr-1"></i> 結案
                     </button>
                     <button v-else @click="toggleProjectStatus" class="px-3 py-1.5 bg-slate-100 text-slate-600 hover:bg-slate-200 rounded-lg text-xs font-bold transition-all border border-slate-200">
-                        <i class="fa-solid fa-box-open mr-1"></i> 重啟專案
+                        <i class="fa-solid fa-box-open mr-1"></i> 重啟
                     </button>
                 </div>
 
                 <div class="flex flex-col md:flex-row justify-between items-start gap-4 mb-8 pb-6 border-b border-slate-100 dark:border-slate-700">
-                    <div class="w-full mr-20">
+                    <div class="w-full mr-32">
                         <label class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 block">專案名稱</label>
                         <input v-model="activeProject.name" :disabled="isArchived" class="text-3xl font-black bg-transparent outline-none w-full placeholder-slate-300 dark:placeholder-slate-600 disabled:opacity-50" placeholder="輸入專案名稱...">
                     </div>
@@ -225,7 +212,7 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
                     <div :class="[themeClasses.innerCard, 'p-5 rounded-2xl border shadow-sm']">
-                        <h3 class="text-xs font-black opacity-50 uppercase tracking-widest mb-4 flex items-center gap-2"><i class="fa-solid fa-users text-indigo-500"></i> 利害關係人 (Stakeholders)</h3>
+                        <h3 class="text-xs font-black opacity-50 uppercase tracking-widest mb-4 flex items-center gap-2"><i class="fa-solid fa-users text-indigo-500"></i> 利害關係人</h3>
                         <input v-model="activeProject.org" placeholder="客戶 / 單位名稱" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded px-3 py-2 text-sm font-bold outline-none mb-3">
                         <div class="space-y-2 max-h-40 overflow-y-auto custom-scroll pr-1">
                             <div v-for="(contact, cIdx) in activeProject.contacts" :key="cIdx" class="flex gap-2">
@@ -238,7 +225,7 @@
                     </div>
 
                     <div :class="[themeClasses.innerCard, 'p-5 rounded-2xl border shadow-sm bg-rose-50/30 dark:bg-rose-900/10 border-rose-100 dark:border-rose-900/30']">
-                        <h3 class="text-xs font-black opacity-50 uppercase tracking-widest mb-4 flex items-center gap-2 text-rose-600"><i class="fa-solid fa-fire-extinguisher"></i> 風險與議題 (Risks)</h3>
+                        <h3 class="text-xs font-black opacity-50 uppercase tracking-widest mb-4 flex items-center gap-2 text-rose-600"><i class="fa-solid fa-fire-extinguisher"></i> 風險與議題</h3>
                         <div class="space-y-3 max-h-40 overflow-y-auto custom-scroll pr-1">
                             <div v-for="(risk, rIdx) in activeProject.risks" :key="rIdx" class="bg-white dark:bg-slate-800 p-3 rounded-xl border border-rose-100 dark:border-rose-900/50 shadow-sm group">
                                 <div class="flex justify-between items-center mb-1">
@@ -347,7 +334,7 @@
             </article>
         </main>
 
-        <!-- TAB 4: 範本管理 (New) -->
+        <!-- TAB 4: 範本管理 -->
         <main v-if="currentTab === 'template'" class="animate-fade-in">
             <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
                 <!-- 範本列表 -->
@@ -374,30 +361,22 @@
                         </div>
                         <button @click="deleteTemplate" class="text-rose-400 hover:text-rose-600 text-sm font-bold shrink-0"><i class="fa-solid fa-trash-can mr-1"></i> 刪除範本</button>
                     </div>
-
                     <div class="grid grid-cols-2 gap-6 mb-8">
                          <div :class="[themeClasses.innerCard, 'p-4 rounded-xl border']">
-                            <h4 class="text-xs font-bold mb-2">預設風險 ({{ activeTemplate.risks.length }})</h4>
+                            <h4 class="text-xs font-bold mb-2">預設風險</h4>
                             <div class="space-y-2 max-h-40 overflow-y-auto custom-scroll">
-                                <div v-for="(r, i) in activeTemplate.risks" class="bg-white p-2 rounded border flex justify-between text-xs">
-                                    <span>{{ r.desc }}</span>
-                                    <button @click="activeTemplate.risks.splice(i,1)" class="text-rose-400">×</button>
-                                </div>
+                                <div v-for="(r, i) in activeTemplate.risks" class="bg-white p-2 rounded border flex justify-between text-xs"><span>{{ r.desc }}</span><button @click="activeTemplate.risks.splice(i,1)" class="text-rose-400">×</button></div>
                             </div>
                             <button @click="activeTemplate.risks.push({level:'med',desc:'新風險',action:''})" class="text-xs text-indigo-500 font-bold mt-2">+ 加風險</button>
                         </div>
                          <div :class="[themeClasses.innerCard, 'p-4 rounded-xl border']">
-                            <h4 class="text-xs font-bold mb-2">預設關係人 ({{ activeTemplate.contacts.length }})</h4>
+                            <h4 class="text-xs font-bold mb-2">預設關係人</h4>
                             <div class="space-y-2 max-h-40 overflow-y-auto custom-scroll">
-                                <div v-for="(c, i) in activeTemplate.contacts" class="bg-white p-2 rounded border flex justify-between text-xs">
-                                    <span>{{ c.name }} - {{ c.info }}</span>
-                                    <button @click="activeTemplate.contacts.splice(i,1)" class="text-rose-400">×</button>
-                                </div>
+                                <div v-for="(c, i) in activeTemplate.contacts" class="bg-white p-2 rounded border flex justify-between text-xs"><span>{{ c.name }} - {{ c.info }}</span><button @click="activeTemplate.contacts.splice(i,1)" class="text-rose-400">×</button></div>
                             </div>
                             <button @click="activeTemplate.contacts.push({name:'新角色',info:''})" class="text-xs text-indigo-500 font-bold mt-2">+ 加角色</button>
                         </div>
                     </div>
-
                     <h4 class="font-bold text-lg mb-4">預設任務節點</h4>
                     <div class="space-y-2">
                         <div v-for="(act, i) in activeTemplate.activities" :key="i" class="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
@@ -416,19 +395,12 @@
 
     <script>
         const { createApp } = Vue;
-        
-        // 預設 2026 年度範本資料 (若無範本時載入)
         const DEFAULT_TEMPLATE = {
             id: 'tpl_2026_std',
             name: '2026 軟體專案標準範本',
             org: '範本客戶',
-            contacts: [
-                {name: 'PM', info: '專案經理'}, {name: 'PG', info: '開發人員'}
-            ],
-            risks: [
-                {level: 'high', desc: '需求變更頻繁', action: '建立變更管理流程'},
-                {level: 'med', desc: '技術債累積', action: '每週安排 Refactor 時間'}
-            ],
+            contacts: [{name: 'PM', info: '專案經理'}, {name: 'PG', info: '開發人員'}],
+            risks: [{level: 'high', desc: '需求變更頻繁', action: '建立變更管理流程'}, {level: 'med', desc: '技術債累積', action: '每週安排 Refactor 時間'}],
             activities: [
                 { id: 1, date: '2026-01-10', name: '專案啟動 (Kick-off)', status: 'pending', owner: 'PM', type: 'deadline', note: '', showNote: false },
                 { id: 2, date: '2026-03-31', name: '需求規格書確認', status: 'pending', owner: 'SA', type: 'deadline', note: '', showNote: false },
@@ -447,36 +419,25 @@
                     selectedTplId: null,
                     showToast: false,
                     toastMessage: '',
-                    listFilter: 'active', // active | completed
+                    listFilter: 'active',
                     showNewProjectModal: false,
-                    
-                    // 資料儲存
                     projects: JSON.parse(localStorage.getItem('pm-projects-v2')) || [],
                     templates: JSON.parse(localStorage.getItem('pm-templates-v1')) || [JSON.parse(JSON.stringify(DEFAULT_TEMPLATE))],
-                    
                     tabs: [
                         {id:'time',n:'年度全覽',icon:'fa-calendar-days'},
                         {id:'project',n:'專案管理',icon:'fa-list-check'},
                         {id:'report',n:'報告 & 儀表板',icon:'fa-chart-pie'},
-                        {id:'template',n:'範本管理',icon:'fa-copy'} // 新增
+                        {id:'template',n:'範本管理',icon:'fa-copy'}
                     ]
                 }
             },
             computed: {
-                // 專案相關計算
-                filteredProjects() {
-                    const status = this.listFilter === 'active' ? ['active', undefined] : ['completed'];
-                    return this.projects.filter(p => status.includes(p.status));
-                },
-                activeProjects() { return this.projects.filter(p => p.status !== 'completed'); }, // 給甘特圖用
+                filteredProjects() { const status = this.listFilter === 'active' ? ['active', undefined] : ['completed']; return this.projects.filter(p => status.includes(p.status)); },
+                activeProjects() { return this.projects.filter(p => p.status !== 'completed'); },
                 activeProject() { return this.projects.find(p => p.id === this.selectedPid); },
                 sortedActivities() { return this.activeProject?.activities.sort((a,b) => dayjs(a.date).diff(dayjs(b.date))) || []; },
                 isArchived() { return this.activeProject?.status === 'completed'; },
-                
-                // 範本相關計算
                 activeTemplate() { return this.templates.find(t => t.id === this.selectedTplId); },
-                
-                // 通用
                 today() { return dayjs().format('YYYY-MM-DD'); },
                 isCurrentYear() { return dayjs().year() === 2026; },
                 themeClasses() {
@@ -498,8 +459,6 @@
             methods: {
                 dayjs,
                 setTheme(t) { this.theme = t; localStorage.setItem('pm-theme', t); },
-                
-                // --- 專案操作 ---
                 createFromTemplate(tpl) {
                     const id = Date.now();
                     let newProject = {
@@ -511,125 +470,65 @@
                         risks: tpl ? JSON.parse(JSON.stringify(tpl.risks)) : [],
                         activities: []
                     };
-                    
                     if (tpl && tpl.activities) {
-                        newProject.activities = tpl.activities.map(a => ({
-                            ...a,
-                            id: id + Math.random(), // 重產 ID 避免衝突
-                            status: 'pending' // 重置狀態
-                        }));
+                        newProject.activities = tpl.activities.map(a => ({ ...a, id: id + Math.random(), status: 'pending' }));
                     }
-                    
                     this.projects.unshift(newProject);
                     this.selectedPid = id;
-                    this.listFilter = 'active'; // 切回進行中列表
+                    this.listFilter = 'active';
                     this.showNewProjectModal = false;
                     this.showToastMsg('專案建立成功！');
+                },
+                saveAsTemplate() {
+                    if (!this.activeProject) return;
+                    if (!confirm('確定要將目前的專案結構另存為新範本嗎？\n(將複製里程碑、風險與關係人結構)')) return;
+                    const p = this.activeProject;
+                    const newTpl = {
+                        id: Date.now(),
+                        name: `[範本] ${p.name}`,
+                        org: p.org || '',
+                        contacts: JSON.parse(JSON.stringify(p.contacts)),
+                        risks: JSON.parse(JSON.stringify(p.risks)),
+                        activities: p.activities.map(a => ({ ...a, id: Date.now() + Math.random(), status: 'pending', note: '', showNote: false }))
+                    };
+                    this.templates.unshift(newTpl);
+                    this.showToastMsg('已成功建立範本！請至「範本管理」查看');
                 },
                 toggleProjectStatus() {
                     if (!this.activeProject) return;
                     const isComplete = this.activeProject.status === 'completed';
                     if (confirm(isComplete ? '確定要重新啟動此專案？' : '確定要將此專案結案歸檔？')) {
                         this.activeProject.status = isComplete ? 'active' : 'completed';
-                        this.listFilter = this.activeProject.status; // 自動切換列表顯示
+                        this.listFilter = this.activeProject.status;
                         this.showToastMsg(isComplete ? '專案已重啟' : '專案已歸檔');
                     }
                 },
-                deleteProject() {
-                    if (confirm('⚠️ 確定刪除？')) {
-                        this.projects = this.projects.filter(p => p.id !== this.selectedPid);
-                        this.selectedPid = null;
-                    }
-                },
-
-                // --- 範本操作 ---
-                createNewTemplate() {
-                    const id = Date.now();
-                    this.templates.unshift({
-                        id, name: '新範本', org: '', contacts: [], risks: [], activities: []
-                    });
-                    this.selectedTplId = id;
-                },
-                addTemplateActivity() {
-                    if(!this.activeTemplate) return;
-                    this.activeTemplate.activities.push({
-                        id: Date.now(), date: '2026-01-01', name: '新節點', type: 'activity', owner: '', status: 'pending', showNote: false
-                    });
-                },
-                deleteTemplate() {
-                    if (confirm('確定刪除此範本？')) {
-                        this.templates = this.templates.filter(t => t.id !== this.selectedTplId);
-                        this.selectedTplId = null;
-                    }
-                },
-
-                // --- 細項操作 (Activity/Risk/Contact) ---
-                addActivity() { 
-                    this.activeProject.activities.push({ id: Date.now(), name: '', date: dayjs().year(2026).format('YYYY-MM-DD'), status: 'pending', owner: '', type: 'activity', note: '', showNote: false }); 
-                },
+                deleteProject() { if (confirm('⚠️ 確定刪除？')) { this.projects = this.projects.filter(p => p.id !== this.selectedPid); this.selectedPid = null; } },
+                createNewTemplate() { const id = Date.now(); this.templates.unshift({ id, name: '新範本', org: '', contacts: [], risks: [], activities: [] }); this.selectedTplId = id; },
+                addTemplateActivity() { if(!this.activeTemplate) return; this.activeTemplate.activities.push({ id: Date.now(), date: '2026-01-01', name: '新節點', type: 'activity', owner: '', status: 'pending', showNote: false }); },
+                deleteTemplate() { if (confirm('確定刪除此範本？')) { this.templates = this.templates.filter(t => t.id !== this.selectedTplId); this.selectedTplId = null; } },
+                addActivity() { this.activeProject.activities.push({ id: Date.now(), name: '', date: dayjs().year(2026).format('YYYY-MM-DD'), status: 'pending', owner: '', type: 'activity', note: '', showNote: false }); },
                 removeActivity(idx) { this.activeProject.activities.splice(idx, 1); },
                 addContact() { this.activeProject.contacts.push({ name: '', info: '' }); },
                 removeContact(i) { this.activeProject.contacts.splice(i, 1); },
                 addRisk() { if(!this.activeProject.risks) this.activeProject.risks=[]; this.activeProject.risks.push({ level: 'med', desc: '', action: '' }); },
                 removeRisk(i) { this.activeProject.risks.splice(i, 1); },
-                
-                // --- 視覺與計算 ---
                 getYearPos(date) { return Math.max(0, Math.min(100, (dayjs(date).diff(dayjs('2026-01-01'), 'day') / 365) * 100)); },
                 calculateProgress(p) { if (!p || !p.activities.length) return 0; return Math.round((p.activities.filter(a => a.status === 'done').length / p.activities.length) * 100); },
                 getRiskCount(p) { return { blocked: p.activities.filter(a => a.status === 'blocked').length }; },
                 getRiskScore(p) { return p.activities.filter(a=>a.status==='blocked').length > 0 ? 'HIGH' : 'LOW'; },
-                
-                // --- Helpers ---
                 statusText(s) { const map = { pending:'待辦', ontrack:'正常', risk:'風險', blocked:'卡關', done:'完成' }; return map[s] || '待辦'; },
                 statusIcon(s) { const map = { pending:'fa-regular fa-circle', ontrack:'fa-solid fa-play', risk:'fa-solid fa-triangle-exclamation', blocked:'fa-solid fa-ban', done:'fa-solid fa-check' }; return map[s]; },
-                getStatusBtnClass(s) {
-                    const map = {
-                        pending: 'border-slate-300 text-slate-500 bg-slate-50 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-400',
-                        ontrack: 'border-emerald-500 text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 dark:text-emerald-400',
-                        risk: 'border-amber-500 text-amber-600 bg-amber-50 dark:bg-amber-900/20 dark:text-amber-400',
-                        blocked: 'border-rose-500 text-rose-600 bg-rose-50 dark:bg-rose-900/20 dark:text-rose-400 status-blocked',
-                        done: 'border-slate-500 text-slate-600 bg-slate-100 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-300'
-                    };
-                    return map[s];
-                },
-                getStatusColorClass(s) {
-                    const map = { pending: 'bg-slate-300 border-slate-400', ontrack: 'bg-emerald-500 border-emerald-600', risk: 'bg-amber-400 border-amber-500', blocked: 'bg-rose-500 border-rose-600 status-blocked', done: 'bg-slate-300 border-slate-400 grayscale opacity-50' };
-                    return map[s] || map.pending;
-                },
+                getStatusBtnClass(s) { const map = { pending: 'border-slate-300 text-slate-500 bg-slate-50 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-400', ontrack: 'border-emerald-500 text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 dark:text-emerald-400', risk: 'border-amber-500 text-amber-600 bg-amber-50 dark:bg-amber-900/20 dark:text-amber-400', blocked: 'border-rose-500 text-rose-600 bg-rose-50 dark:bg-rose-900/20 dark:text-rose-400 status-blocked', done: 'border-slate-500 text-slate-600 bg-slate-100 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-300' }; return map[s]; },
+                getStatusColorClass(s) { const map = { pending: 'bg-slate-300 border-slate-400', ontrack: 'bg-emerald-500 border-emerald-600', risk: 'bg-amber-400 border-amber-500', blocked: 'bg-rose-500 border-rose-600 status-blocked', done: 'bg-slate-300 border-slate-400 grayscale opacity-50' }; return map[s] || map.pending; },
                 getStatusDot(s) { const map = { pending: 'bg-slate-300', ontrack: 'bg-emerald-500', risk: 'bg-amber-500', blocked: 'bg-rose-500', done: 'bg-slate-700' }; return map[s]; },
                 getStatusTextColor(s) { const map = { pending: 'text-slate-400', ontrack: 'text-emerald-600', risk: 'text-amber-600', blocked: 'text-rose-600', done: 'text-slate-400' }; return map[s]; },
                 getRiskLevelColor(l) { return { HIGH: 'text-rose-500', MED: 'text-amber-500', LOW: 'text-emerald-500' }[l]; },
                 getRiskLevelColorBg(l) { return { HIGH: 'bg-rose-500', MED: 'bg-amber-500', LOW: 'bg-emerald-500' }[l]; },
                 getRiskLevelClass(l) { return { high: 'bg-rose-100 text-rose-600', med: 'bg-amber-100 text-amber-600', low: 'bg-slate-200 text-slate-600' }[l]; },
                 getActivitiesByMonth(m) { if (!this.activeProject) return []; return this.activeProject.activities.filter(a => dayjs(a.date).month() + 1 === m).sort((a,b) => dayjs(a.date).diff(dayjs(b.date))); },
-
-                // --- I/O ---
-                exportData() { 
-                    const data = { projects: this.projects, templates: this.templates };
-                    const link = document.createElement('a'); 
-                    link.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data)); 
-                    link.download = `PM_System_Backup_${dayjs().format('YYYYMMDD')}.json`; 
-                    link.click(); 
-                    this.showToastMsg('完整系統備份已下載');
-                },
-                importData(event) { 
-                    const reader = new FileReader(); 
-                    reader.onload = (e) => { 
-                        try {
-                            const data = JSON.parse(e.target.result);
-                            // 兼容舊版與新版備份結構
-                            if(data.projects) {
-                                this.projects = data.projects;
-                                this.templates = data.templates || this.templates;
-                            } else if (Array.isArray(data)) {
-                                this.projects = data; // 舊版純陣列
-                            }
-                            this.showToastMsg('資料還原成功！');
-                        } catch(err) { alert('檔案格式錯誤'); }
-                        event.target.value = '';
-                    }; 
-                    reader.readAsText(event.target.files[0]); 
-                },
+                exportData() { const data = { projects: this.projects, templates: this.templates }; const link = document.createElement('a'); link.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data)); link.download = `PM_System_Backup_${dayjs().format('YYYYMMDD')}.json`; link.click(); this.showToastMsg('完整系統備份已下載'); },
+                importData(event) { const reader = new FileReader(); reader.onload = (e) => { try { const data = JSON.parse(e.target.result); if(data.projects) { this.projects = data.projects; this.templates = data.templates || this.templates; } else if (Array.isArray(data)) { this.projects = data; } this.showToastMsg('資料還原成功！'); } catch(err) { alert('檔案格式錯誤'); } event.target.value = ''; }; reader.readAsText(event.target.files[0]); },
                 showToastMsg(msg) { this.toastMessage = msg; this.showToast = true; setTimeout(() => this.showToast = false, 2500); }
             },
             mounted() { if(this.projects.length) this.selectedPid = this.projects[0].id; }
