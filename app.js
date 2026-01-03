@@ -97,9 +97,9 @@ createApp({
             const isForest = this.theme === 'forest';
             return {
                 body: isForest ? 'bg-[#1a472a] text-[#e2e8f0]' : (this.theme === 'sakura' ? 'bg-[#fff5f7] text-[#5d4037]' : 'bg-slate-50 text-slate-700'),
-                card: isForest ? 'bg-[#2d6a4f]/80 border-[#40916c]' : (this.theme === 'sakura' ? 'bg-white/90 border-[#fecfef] shadow-pink-100' : 'bg-white border-slate-200'),
-                brand: isForest ? 'text-[#95d5b2]' : (this.theme === 'sakura' ? 'text-[#d81b60]' : 'text-slate-800'),
-                innerCard: isForest ? 'bg-[#1b4332] border-[#2d6a4f]' : (this.theme === 'sakura' ? 'bg-[#fff0f3] border-[#fecfef]' : 'bg-slate-50 border-slate-100'),
+                card: isForest ? 'bg-white/90 border-[#2d6a4f] text-[#1b4332] shadow-emerald-900/20' : (this.theme === 'sakura' ? 'bg-white/90 border-[#fecfef] shadow-pink-100' : 'bg-white border-slate-200'),
+                brand: isForest ? 'text-[#2d6a4f]' : (this.theme === 'sakura' ? 'text-[#d81b60]' : 'text-slate-800'),
+                innerCard: isForest ? 'bg-[#f0fdf4] border-[#b7e4c7]' : (this.theme === 'sakura' ? 'bg-[#fff0f3] border-[#fecfef]' : 'bg-slate-50 border-slate-100'),
                 activeItem: isForest ? 'bg-[#2d6a4f] border-[#95d5b2] text-[#d8f3dc]' : (this.theme === 'sakura' ? 'bg-[#fff0f3] border-[#ff7eb3] text-[#d81b60] shadow-md shadow-pink-100' : 'bg-white border-indigo-500 text-indigo-700 shadow-md'),
                 inactiveItem: isForest ? 'border-transparent opacity-60 hover:bg-[#2d6a4f]/50' : (this.theme === 'sakura' ? 'border-transparent opacity-70 hover:bg-white/80' : 'border-transparent opacity-60 hover:bg-white hover:shadow-sm')
             };
