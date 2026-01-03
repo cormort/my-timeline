@@ -37,10 +37,17 @@ createApp({
         return {
             theme: localStorage.getItem('pm-theme') || 'light',
             currentTab: 'project',
+            viewMode: 'list', // list, board
             selectedPid: null,
             selectedTplId: null,
             dragIndex: null,
+            statusChartInstance: null,
+            riskChartInstance: null,
+            riskChartInstance: null,
+            draggedActivity: null,
             showToast: false,
+            toastHasUndo: false,
+            deletedData: null,
             toastMessage: '',
             listFilter: 'active',
             showNewProjectModal: false,
@@ -83,6 +90,15 @@ createApp({
             // 移除自動排序，改為依照陣列順序 (支援拖曳排序)
             return this.activeProject?.activities || [];
         },
+        kanbanColumns() {
+            if (!this.activeProject) return {};
+            return {
+                pending: { title: '待辦事項', icon: 'fa-regular fa-circle', color: 'slate', items: this.activeProject.activities.filter(a => a.status === 'pending') },
+                ontrack: { title: '進行中', icon: 'fa-solid fa-play', color: 'emerald', items: this.activeProject.activities.filter(a => a.status === 'ontrack') },
+                risk: { title: '風險 / 卡關', icon: 'fa-solid fa-triangle-exclamation', color: 'amber', items: this.activeProject.activities.filter(a => ['risk', 'blocked'].includes(a.status)) },
+                done: { title: '已完成', icon: 'fa-solid fa-check', color: 'indigo', items: this.activeProject.activities.filter(a => a.status === 'done') }
+            };
+        },
         isArchived() {
             return this.activeProject?.status === 'completed';
         },
@@ -112,6 +128,19 @@ createApp({
     // 監聽器 - 自動儲存
     // ============================================
     watch: {
+        activeProject: {
+            handler() {
+                if (this.currentTab === 'report') {
+                    this.initCharts();
+                }
+            },
+            deep: true
+        },
+        currentTab(val) {
+            if (val === 'report') {
+                this.initCharts();
+            }
+        },
         projects: {
             handler(val) {
                 localStorage.setItem('pm-projects-v2', JSON.stringify(val));
@@ -238,10 +267,16 @@ createApp({
             }
         },
 
-        deleteProject() {
-            if (confirm('⚠️ 確定刪除？')) {
+        async deleteProject() {
+            if (confirm('⚠️ 確定刪除專案？\n(刪除後可立即復原)')) {
+                const p = this.projects.find(p => p.id === this.selectedPid);
+                const idx = this.projects.findIndex(p => p.id === this.selectedPid);
+
+                this.deletedData = { type: 'project', data: p, index: idx };
                 this.projects = this.projects.filter(p => p.id !== this.selectedPid);
                 this.selectedPid = null;
+
+                this.showToastMsg('專案已刪除', true);
             }
         },
 
@@ -267,8 +302,14 @@ createApp({
 
         deleteTemplate() {
             if (confirm('確定刪除此範本？')) {
+                const t = this.templates.find(t => t.id === this.selectedTplId);
+                const idx = this.templates.findIndex(t => t.id === this.selectedTplId);
+
+                this.deletedData = { type: 'template', data: t, index: idx };
                 this.templates = this.templates.filter(t => t.id !== this.selectedTplId);
                 this.selectedTplId = null;
+
+                this.showToastMsg('範本已刪除', true);
             }
         },
 
@@ -288,7 +329,18 @@ createApp({
         },
 
         removeActivity(idx) {
+            // 不需 confirm，直接刪除並提供 Undo
+            const act = this.activeProject.activities[idx];
+            this.deletedData = { type: 'activity', data: act, index: idx, parentId: this.selectedPid };
             this.activeProject.activities.splice(idx, 1);
+            this.showToastMsg('任務已刪除', true);
+        },
+
+        removeActivityById(id) {
+            const idx = this.activeProject.activities.findIndex(a => a.id === id);
+            if (idx !== -1) {
+                this.removeActivity(idx);
+            }
         },
 
         // --- 聯絡人操作 ---
@@ -310,193 +362,26 @@ createApp({
             this.activeProject.risks.splice(i, 1);
         },
 
-        // --- 計算輔助函數 ---
-        getYearPos(date) {
-            return Math.max(0, Math.min(100, (dayjs(date).diff(dayjs('2026-01-01'), 'day') / 365) * 100));
-        },
+        // --- 復原機制 (Undo) ---
+        handleUndo() {
+            if (!this.deletedData) return;
 
-        calculateProgress(p) {
-            if (!p || !p.activities.length) return 0;
-            return Math.round((p.activities.filter(a => a.status === 'done').length / p.activities.length) * 100);
-        },
+            const { type, data, index, parentId } = this.deletedData;
 
-        getRiskCount(p) {
-            return { blocked: p.activities.filter(a => a.status === 'blocked').length };
-        },
-
-        getRiskScore(p) {
-            return p.activities.filter(a => a.status === 'blocked').length > 0 ? 'HIGH' : 'LOW';
-        },
-
-        // --- 狀態顯示輔助函數 ---
-        statusText(s) {
-            const map = {
-                pending: '⏳ 待辦',
-                ontrack: '🚀 正常',
-                risk: '⚠️ 風險',
-                blocked: '🆘 卡關',
-                done: '✅ 完成'
-            };
-            return map[s] || '⏳ 待辦';
-        },
-
-        statusIcon(s) {
-            const map = {
-                pending: 'fa-regular fa-circle',
-                ontrack: 'fa-solid fa-play',
-                risk: 'fa-solid fa-triangle-exclamation',
-                blocked: 'fa-solid fa-ban',
-                done: 'fa-solid fa-check'
-            };
-            return map[s];
-        },
-
-        getStatusBtnClass(s) {
-            const map = {
-                pending: 'border-slate-300 text-slate-500 bg-slate-50 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-400',
-                ontrack: 'border-emerald-500 text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 dark:text-emerald-400',
-                risk: 'border-amber-500 text-amber-600 bg-amber-50 dark:bg-amber-900/20 dark:text-amber-400',
-                blocked: 'border-rose-500 text-rose-600 bg-rose-50 dark:bg-rose-900/20 dark:text-rose-400 status-blocked',
-                done: 'border-slate-500 text-slate-600 bg-slate-100 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-300'
-            };
-            return map[s];
-        },
-
-        getStatusColorClass(s) {
-            const map = {
-                pending: 'bg-slate-300 border-slate-400',
-                ontrack: 'bg-emerald-500 border-emerald-600',
-                risk: 'bg-amber-400 border-amber-500',
-                blocked: 'bg-rose-500 border-rose-600 status-blocked',
-                done: 'bg-slate-300 border-slate-400 grayscale opacity-50'
-            };
-            return map[s] || map.pending;
-        },
-
-        getStatusDot(s) {
-            const map = {
-                pending: 'bg-slate-300',
-                ontrack: 'bg-emerald-500',
-                risk: 'bg-amber-500',
-                blocked: 'bg-rose-500',
-                done: 'bg-slate-700'
-            };
-            return map[s];
-        },
-
-        getStatusTextColor(s) {
-            const map = {
-                pending: 'text-slate-400',
-                ontrack: 'text-emerald-600',
-                risk: 'text-amber-600',
-                blocked: 'text-rose-600',
-                done: 'text-slate-400'
-            };
-            return map[s];
-        },
-
-        getRiskLevelColor(l) {
-            return { HIGH: 'text-rose-500', MED: 'text-amber-500', LOW: 'text-emerald-500' }[l];
-        },
-
-        getRiskLevelColorBg(l) {
-            return { HIGH: 'bg-rose-500', MED: 'bg-amber-500', LOW: 'bg-emerald-500' }[l];
-        },
-
-        getRiskLevelClass(l) {
-            return { high: 'bg-rose-100 text-rose-600', med: 'bg-amber-100 text-amber-600', low: 'bg-slate-200 text-slate-600' }[l];
-        },
-
-        getActivitiesByMonth(m) {
-            if (!this.activeProject) return [];
-            return this.activeProject.activities.filter(a => dayjs(a.date).month() + 1 === m).sort((a, b) => dayjs(a.date).diff(dayjs(b.date)));
-        },
-
-        // --- Excel 匯出 (Simplified for personal use) ---
-        exportToExcel() {
-            if (!this.activeProject) return;
-            const p = this.activeProject;
-            const wb = XLSX.utils.book_new();
-            const now = dayjs().format('YYYY-MM-DD HH:mm');
-
-            // 1. 準備綜合數據陣列
-            const data = [
-                ["專案執行報告 (個人簡閱版)"],
-                ["匯出時間", now],
-                [],
-                ["═══ 專案基本資訊 ═══"],
-                ["專案名稱", p.name],
-                ["客戶/單位", p.org || '-'],
-                ["專案進度", this.calculateProgress(p) + "%"],
-                ["專案狀態", p.status === 'completed' ? '已結案' : '進行中'],
-                [],
-            ];
-
-            // 2. 風險摘要 (如果有)
-            if (p.risks && p.risks.length > 0) {
-                data.push(["═══ 風險與對策 ═══"]);
-                data.push(["等級", "風險描述", "緩解對策"]);
-                p.risks.forEach(r => {
-                    const level = r.level === 'high' ? '🔴 高' : r.level === 'med' ? '🟡 中' : '🟢 低';
-                    data.push([level, r.desc, r.action]);
-                });
-                data.push([]);
+            if (type === 'project') {
+                this.projects.splice(index, 0, data);
+            } else if (type === 'template') {
+                this.templates.splice(index, 0, data);
+            } else if (type === 'activity') {
+                const p = this.projects.find(p => p.id === parentId);
+                if (p) {
+                    p.activities.splice(index, 0, data);
+                }
             }
 
-            // 3. 執行明細 (主要內容)
-            data.push(["═══ 執行任務明細 ═══"]);
-            data.push(["日期", "類型", "任務名稱", "狀態", "負責人", "備註"]);
-
-            const sorted = [...p.activities].sort((a, b) => dayjs(a.date).diff(dayjs(b.date)));
-            sorted.forEach(a => {
-                data.push([
-                    a.date,
-                    a.type === 'deadline' ? '🔷 里程碑' : '📋 任務',
-                    a.name,
-                    this.statusText(a.status),
-                    a.owner || '-',
-                    a.note || ''
-                ]);
-            });
-
-            // 4. 利害關係人 (如果有)
-            if (p.contacts && p.contacts.length > 0) {
-                data.push([]);
-                data.push(["═══ 利害關係人 ═══"]);
-                data.push(["角色/姓名", "聯絡資訊"]);
-                p.contacts.forEach(c => {
-                    data.push([c.name, c.info]);
-                });
-            }
-
-            // 建立 WorkSheet
-            const ws = XLSX.utils.aoa_to_sheet(data);
-
-            // 設定欄寬
-            ws['!cols'] = [
-                { wch: 15 }, // A: 日期/標籤
-                { wch: 12 }, // B: 類型/內容
-                { wch: 40 }, // C: 名稱/對策
-                { wch: 10 }, // D: 狀態
-                { wch: 12 }, // E: 負責人
-                { wch: 30 }  // F: 備註
-            ];
-
-            XLSX.utils.book_append_sheet(wb, ws, "專案摘要匯總");
-
-            // 匯出檔案
-            const safeName = p.name.replace(/[\\/:*?"<>|]/g, '_');
-            const fileName = `${safeName}_簡報_${dayjs().format('YYYYMMDD')}.xlsx`;
-
-            // Revert back to writeFile which is generally more robust for extensions if filename is good
-            // Explicitly setting bookType to xlsx
-            try {
-                XLSX.writeFile(wb, fileName, { bookType: 'xlsx' });
-                this.showToastMsg(`已匯出報表：${fileName}`);
-            } catch (e) {
-                console.error(e);
-                alert("匯出失敗，請檢查瀏覽器設定");
-            }
+            this.deletedData = null;
+            this.showToast = false; // 關閉 Toast
+            this.showToastMsg('已復原動作');
         },
 
         // --- 資料匯入匯出 ---
@@ -530,10 +415,18 @@ createApp({
         },
 
         // --- Toast 通知 ---
-        showToastMsg(msg) {
+        showToastMsg(msg, canUndo = false) {
             this.toastMessage = msg;
+            this.toastHasUndo = canUndo;
             this.showToast = true;
-            setTimeout(() => this.showToast = false, 2500);
+
+            // 如果有 Undo，顯示時間長一點 (5秒)，否則維持 2.5秒
+            const duration = canUndo ? 5000 : 2500;
+            setTimeout(() => {
+                // 只有在還沒被手動關閉或操作的情況下自動關閉
+                if (this.toastMessage === msg) this.showToast = false;
+                // 注意：這裡的判斷比較簡單，如果快速觸發多次 Toast 可能會有 edge case，但在這個規模可接受
+            }, duration);
         },
 
         // --- 拖曳排序 (Drag & Drop) ---
@@ -556,6 +449,162 @@ createApp({
             this.dragIndex = null;
             // 短暫閃爍提示儲存 (雖然 watch 會自動存，但給個反饋)
             // this.showToastMsg('順序已更新'); 
+        },
+
+        // --- 看板拖曳邏輯 (Kanban Drag & Drop) ---
+        handleKanbanDragStart(act) {
+            this.draggedActivity = act;
+        },
+
+        handleKanbanDrop(targetStatus) {
+            if (!this.draggedActivity) return;
+
+            // 如果目標狀態是 risk，自動設為 risk (即使原本是 blocked)
+            // 如果目標狀態是 blocked，但原本不是，則設為 blocked
+            // 這裡直接將狀態更新為目標欄位的狀態
+
+            // 特殊處理：Risk 欄位包含 risk 和 blocked，我們預設拖進去是 risk，除非它是 blocked 就不變？
+            // 簡化邏輯：拖進 Risk 欄位 -> 設為 risk；拖進已完成 -> done 等等
+            // 但因為 Risk 欄位顯示 risk/blocked，如果它是 blocked 拖到同一欄位應該不變
+            // 如果從其他欄位拖到 Risk 欄位 -> 預設 risk
+
+            let newStatus = targetStatus;
+
+            // Risk 欄位對應的 key 是 'risk'，但狀態可能是 'risk' 或 'blocked'
+            if (targetStatus === 'risk') {
+                if (this.draggedActivity.status !== 'blocked') {
+                    newStatus = 'risk';
+                } else {
+                    // 如果已經是 blocked，拖回 risk 欄位 (可能是調整順序?) -> 保持 blocked
+                    newStatus = 'blocked';
+                }
+            }
+
+            this.draggedActivity.status = newStatus;
+            this.draggedActivity = null;
+            this.showToastMsg(`狀態更新：${this.statusText(newStatus)}`);
+        },
+
+        handleKanbanDragEnd() {
+            this.draggedActivity = null;
+        },
+
+        // --- 圖表邏輯 (Charts) ---
+        initCharts() {
+            if (!this.activeProject || this.currentTab !== 'report') return;
+
+            // 延遲執行確保 DOM 存在
+            this.$nextTick(() => {
+                this.renderStatusChart();
+                this.renderRiskChart();
+            });
+        },
+
+        renderStatusChart() {
+            const ctx = document.getElementById('statusChart');
+            if (!ctx) return;
+
+            // 銷毀舊圖表
+            if (this.statusChartInstance) {
+                this.statusChartInstance.destroy();
+            }
+
+            const stats = {
+                pending: this.activeProject.activities.filter(a => a.status === 'pending').length,
+                ontrack: this.activeProject.activities.filter(a => a.status === 'ontrack').length,
+                menu_risk: this.activeProject.activities.filter(a => a.status === 'risk').length,
+                blocked: this.activeProject.activities.filter(a => a.status === 'blocked').length,
+                done: this.activeProject.activities.filter(a => a.status === 'done').length
+            };
+
+            // 根據主題調整配色 (Forest / Sakura / Default)
+            let colors = ['#cbd5e1', '#10b981', '#f59e0b', '#f43f5e', '#64748b'];
+            if (this.theme === 'forest') {
+                colors = ['#d1fae5', '#34d399', '#fbbf24', '#f87171', '#065f46']; // Forest Palette
+            } else if (this.theme === 'sakura') {
+                colors = ['#fce7f3', '#f472b6', '#fbbf24', '#f43f5e', '#be185d']; // Sakura Palette
+            }
+
+            const data = {
+                labels: ['待辦', '正常', '風險', '卡關', '完成'],
+                datasets: [{
+                    data: [stats.pending, stats.ontrack, stats.menu_risk, stats.blocked, stats.done],
+                    backgroundColor: colors,
+                    borderWidth: 0
+                }]
+            };
+
+            this.statusChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right', labels: { font: { family: 'Inter' }, boxWidth: 12, padding: 15 } }
+                    },
+                    cutout: '75%',
+                    elements: { arc: { borderRadius: 4 } } // 圓角效果
+                }
+            });
+        },
+
+        renderRiskChart() {
+            const ctx = document.getElementById('riskChart');
+            if (!ctx) return;
+
+            if (this.riskChartInstance) {
+                this.riskChartInstance.destroy();
+            }
+
+            const risks = this.activeProject.risks || [];
+            const stats = {
+                high: risks.filter(r => r.level === 'high').length,
+                med: risks.filter(r => r.level === 'med').length,
+                low: risks.filter(r => r.level === 'low').length
+            };
+
+            // 根據主題調整配色
+            let colors = ['#f43f5e', '#f59e0b', '#10b981'];
+            if (this.theme === 'forest') {
+                colors = ['#ef4444', '#f59e0b', '#10b981'];
+            } else if (this.theme === 'sakura') {
+                colors = ['#f43f5e', '#f59e0b', '#ec4899'];
+            }
+
+            const data = {
+                labels: ['高風險', '中風險', '低風險'],
+                datasets: [{
+                    label: '數量',
+                    data: [stats.high, stats.med, stats.low],
+                    backgroundColor: colors,
+                    borderRadius: 6, // 圓角柱狀圖
+                    barThickness: 25
+                }]
+            };
+
+            this.riskChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { stepSize: 1, font: { family: 'Inter' } },
+                            grid: { display: true, borderDash: [5, 5], color: 'rgba(0,0,0,0.05)' }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { family: 'Inter' } }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
         },
 
         // --- 櫻花特效邏輯 ---
