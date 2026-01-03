@@ -12,14 +12,14 @@
     --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
     --gradient-success: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
     --glass-bg: rgba(255, 255, 255, 0.7);
-    --glass-bg-forest: rgba(20, 50, 30, 0.85);
+    --glass-bg-forest: rgba(255, 255, 255, 0.9);
 
     /* Forest Theme Colors */
     --forest-primary: #2d6a4f;
     --forest-secondary: #40916c;
     --forest-accent: #95d5b2;
-    --forest-text: #d8f3dc;
-    --forest-border: rgba(149, 213, 178, 0.3);
+    --forest-text: #1b4332;
+    --forest-border: rgba(45, 106, 79, 0.3);
 
     /* Sakura Theme Colors - Enhanced for V2.0 */
     --sakura-primary: #ff85a1;
@@ -118,7 +118,7 @@ body {
 }
 
 .forest .card-gradient-border {
-    background: linear-gradient(#1b4332, #1b4332) padding-box, var(--gradient-primary) border-box;
+    background: linear-gradient(#ffffff, #ffffff) padding-box, var(--gradient-primary) border-box;
 }
 
 /* ============================================
