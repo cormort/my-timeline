@@ -416,9 +416,14 @@
                 </div>
 
                 <div class="space-y-4">
-                    <div v-for="(act, idx) in sortedActivities" :key="act.id"
-                        :class="[themeClasses.innerCard, 'p-4 rounded-2xl border transition-all hover:shadow-md flex flex-col xl:flex-row gap-4 items-start xl:items-center']">
-                        <div class="relative group/status shrink-0" @keyup.esc="act.showStatusMenu = false">
+                    <div v-for="(act, idx) in sortedActivities" :key="act.id" draggable="true"
+                        @dragstart="handleDragStart(idx)" @dragenter="handleDragEnter(idx)" @dragover.prevent
+                        @dragend="handleDragEnd"
+                        :class="[themeClasses.innerCard, 'draggable-item p-4 rounded-2xl border transition-all hover:shadow-md flex flex-col xl:flex-row gap-4 items-start xl:items-center', dragIndex === idx ? 'dragging' : '']">
+                        <div class="relative group/status shrink-0 flex items-center"
+                            @keyup.esc="act.showStatusMenu = false">
+                            <i class="fa-solid fa-grip-vertical drag-handle mr-2 text-slate-300 hover:text-slate-500 cursor-grab"
+                                title="拖曳排序"></i>
                             <button @click="act.showStatusMenu = !act.showStatusMenu"
                                 @blur="setTimeout(() => act.showStatusMenu = false, 200)"
                                 :class="['w-32 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border flex items-center justify-center gap-2 transition-all focus:ring-2 focus:ring-offset-1 outline-none', getStatusBtnClass(act.status)]">
