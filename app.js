@@ -21,11 +21,11 @@ const DEFAULT_TEMPLATE = {
         { level: 'med', desc: '技術債累積', action: '每週安排 Refactor 時間' }
     ],
     activities: [
-        { id: 1, date: '2026-01-10', name: '專案啟動 (Kick-off)', status: 'pending', owner: 'PM', type: 'deadline', note: '', showNote: false },
-        { id: 2, date: '2026-03-31', name: '需求規格書確認', status: 'pending', owner: 'SA', type: 'deadline', note: '', showNote: false },
-        { id: 3, date: '2026-06-30', name: '期中報告', status: 'pending', owner: 'PM', type: 'deadline', note: '', showNote: false },
-        { id: 4, date: '2026-09-15', name: 'UAT 測試', status: 'pending', owner: 'QA', type: 'activity', note: '', showNote: false },
-        { id: 5, date: '2026-12-20', name: '結案驗收', status: 'pending', owner: 'PM', type: 'deadline', note: '', showNote: false }
+        { id: 1, date: '2026-01-10', name: '專案啟動 (Kick-off)', status: 'pending', owner: 'PM', type: 'deadline', note: '', showNote: false, showStatusMenu: false },
+        { id: 2, date: '2026-03-31', name: '需求規格書確認', status: 'pending', owner: 'SA', type: 'deadline', note: '', showNote: false, showStatusMenu: false },
+        { id: 3, date: '2026-06-30', name: '期中報告', status: 'pending', owner: 'PM', type: 'deadline', note: '', showNote: false, showStatusMenu: false },
+        { id: 4, date: '2026-09-15', name: 'UAT 測試', status: 'pending', owner: 'QA', type: 'activity', note: '', showNote: false, showStatusMenu: false },
+        { id: 5, date: '2026-12-20', name: '結案驗收', status: 'pending', owner: 'PM', type: 'deadline', note: '', showNote: false, showStatusMenu: false }
     ]
 };
 
@@ -46,6 +46,7 @@ createApp({
             projects: JSON.parse(localStorage.getItem('pm-projects-v2')) || [],
             templates: JSON.parse(localStorage.getItem('pm-templates-v1')) || [JSON.parse(JSON.stringify(DEFAULT_TEMPLATE))],
             searchQuery: '',
+            fontSize: parseInt(localStorage.getItem('pm-font-size')) || 16,
             tabs: [
                 { id: 'time', n: '年度全覽', icon: 'fa-calendar-days' },
                 { id: 'project', n: '專案管理', icon: 'fa-list-check' },
@@ -93,14 +94,14 @@ createApp({
             return dayjs().year() === 2026;
         },
         themeClasses() {
-            const isDark = this.theme === 'dark';
+            const isForest = this.theme === 'forest';
             return {
-                body: isDark ? 'bg-[#0f172a] text-slate-300' : 'bg-slate-50 text-slate-700',
-                card: isDark ? 'bg-[#1e293b] border-slate-700' : 'bg-white border-slate-200',
-                brand: isDark ? 'text-white' : 'text-slate-800',
-                innerCard: isDark ? 'bg-[#0f172a] border-slate-700' : 'bg-slate-50 border-slate-100',
-                activeItem: isDark ? 'bg-indigo-900/30 border-indigo-500 text-indigo-200' : 'bg-white border-indigo-500 text-indigo-700 shadow-md',
-                inactiveItem: isDark ? 'border-transparent opacity-60 hover:bg-slate-800' : 'border-transparent opacity-60 hover:bg-white hover:shadow-sm'
+                body: isForest ? 'bg-[#1a472a] text-[#e2e8f0]' : (this.theme === 'sakura' ? 'bg-[#fff5f7] text-[#5d4037]' : 'bg-slate-50 text-slate-700'),
+                card: isForest ? 'bg-[#2d6a4f]/80 border-[#40916c]' : (this.theme === 'sakura' ? 'bg-white/90 border-[#fecfef] shadow-pink-100' : 'bg-white border-slate-200'),
+                brand: isForest ? 'text-[#95d5b2]' : (this.theme === 'sakura' ? 'text-[#d81b60]' : 'text-slate-800'),
+                innerCard: isForest ? 'bg-[#1b4332] border-[#2d6a4f]' : (this.theme === 'sakura' ? 'bg-[#fff0f3] border-[#fecfef]' : 'bg-slate-50 border-slate-100'),
+                activeItem: isForest ? 'bg-[#2d6a4f] border-[#95d5b2] text-[#d8f3dc]' : (this.theme === 'sakura' ? 'bg-[#fff0f3] border-[#ff7eb3] text-[#d81b60] shadow-md shadow-pink-100' : 'bg-white border-indigo-500 text-indigo-700 shadow-md'),
+                inactiveItem: isForest ? 'border-transparent opacity-60 hover:bg-[#2d6a4f]/50' : (this.theme === 'sakura' ? 'border-transparent opacity-70 hover:bg-white/80' : 'border-transparent opacity-60 hover:bg-white hover:shadow-sm')
             };
         }
     },
@@ -133,11 +134,29 @@ createApp({
         setTheme(t) {
             this.theme = t;
             localStorage.setItem('pm-theme', t);
-            if (t === 'dark') {
-                document.documentElement.classList.add('dark');
-            } else {
-                document.documentElement.classList.remove('dark');
+            // 移除所有主題類別
+            document.documentElement.classList.remove('dark', 'forest', 'sakura');
+            // 加入當前主題類別
+            if (t !== 'light') {
+                document.documentElement.classList.add(t);
             }
+            // 如果是櫻花模式，觸發飄花效果
+            if (t === 'sakura') {
+                this.$nextTick(() => {
+                    this.createPetals();
+                });
+            } else {
+                // 清除花瓣
+                const container = document.getElementById('sakura-container');
+                if (container) container.innerHTML = '';
+            }
+        },
+
+        // --- 字體大小調整 ---
+        adjustFont(delta) {
+            this.fontSize = Math.max(12, Math.min(24, this.fontSize + delta));
+            localStorage.setItem('pm-font-size', this.fontSize);
+            document.documentElement.style.fontSize = this.fontSize + 'px';
         },
 
         // --- 鍵盤快捷鍵 ---
@@ -160,10 +179,12 @@ createApp({
             if (e.key === 'Escape') {
                 this.showNewProjectModal = false;
             }
-            // Cmd/Ctrl + D: 切換深淺色主題
+            // Cmd/Ctrl + D: 切換深淺色主題 (依照順序循環)
             if ((e.metaKey || e.ctrlKey) && (e.key === 'd' || e.key === 'D')) {
                 e.preventDefault();
-                this.setTheme(this.theme === 'dark' ? 'light' : 'dark');
+                const themes = ['light', 'forest', 'sakura'];
+                const nextIdx = (themes.indexOf(this.theme) + 1) % themes.length;
+                this.setTheme(themes[nextIdx]);
             }
         },
 
@@ -180,7 +201,7 @@ createApp({
                 activities: []
             };
             if (tpl && tpl.activities) {
-                newProject.activities = tpl.activities.map(a => ({ ...a, id: id + Math.random(), status: 'pending' }));
+                newProject.activities = tpl.activities.map(a => ({ ...a, id: id + Math.random(), status: 'pending', showStatusMenu: false }));
             }
             this.projects.unshift(newProject);
             this.selectedPid = id;
@@ -199,7 +220,7 @@ createApp({
                 org: p.org || '',
                 contacts: JSON.parse(JSON.stringify(p.contacts)),
                 risks: JSON.parse(JSON.stringify(p.risks)),
-                activities: p.activities.map(a => ({ ...a, id: Date.now() + Math.random(), status: 'pending', note: '', showNote: false }))
+                activities: p.activities.map(a => ({ ...a, id: Date.now() + Math.random(), status: 'pending', note: '', showNote: false, showStatusMenu: false }))
             };
             this.templates.unshift(newTpl);
             this.showToastMsg('已成功建立範本！請至「範本管理」查看');
@@ -259,7 +280,8 @@ createApp({
                 owner: '',
                 type: 'activity',
                 note: '',
-                showNote: false
+                showNote: false,
+                showStatusMenu: false
             });
         },
 
@@ -306,8 +328,14 @@ createApp({
 
         // --- 狀態顯示輔助函數 ---
         statusText(s) {
-            const map = { pending: '待辦', ontrack: '正常', risk: '風險', blocked: '卡關', done: '完成' };
-            return map[s] || '待辦';
+            const map = {
+                pending: '⏳ 待辦',
+                ontrack: '🚀 正常',
+                risk: '⚠️ 風險',
+                blocked: '🆘 卡關',
+                done: '✅ 完成'
+            };
+            return map[s] || '⏳ 待辦';
         },
 
         statusIcon(s) {
@@ -382,170 +410,91 @@ createApp({
             return this.activeProject.activities.filter(a => dayjs(a.date).month() + 1 === m).sort((a, b) => dayjs(a.date).diff(dayjs(b.date)));
         },
 
-        // --- Excel 匯出 (Enhanced) ---
+        // --- Excel 匯出 (Simplified for personal use) ---
         exportToExcel() {
             if (!this.activeProject) return;
             const p = this.activeProject;
             const wb = XLSX.utils.book_new();
             const now = dayjs().format('YYYY-MM-DD HH:mm');
 
-            // 輔助函數：設定欄寬
-            const setColWidths = (ws, widths) => {
-                ws['!cols'] = widths.map(w => ({ wch: w }));
-            };
-
-            // 計算統計數據
-            const stats = {
-                total: p.activities.length,
-                done: p.activities.filter(a => a.status === 'done').length,
-                pending: p.activities.filter(a => a.status === 'pending').length,
-                ontrack: p.activities.filter(a => a.status === 'ontrack').length,
-                risk: p.activities.filter(a => a.status === 'risk').length,
-                blocked: p.activities.filter(a => a.status === 'blocked').length,
-                deadlines: p.activities.filter(a => a.type === 'deadline').length,
-                tasks: p.activities.filter(a => a.type === 'activity').length
-            };
-            stats.progress = stats.total > 0 ? Math.round((stats.done / stats.total) * 100) : 0;
-
-            // ============================================
-            // Sheet 1: 儀表板總覽
-            // ============================================
-            const dashboardData = [
-                ["專案執行報告"],
-                [],
-                ["報告產生時間", now],
+            // 1. 準備綜合數據陣列
+            const data = [
+                ["專案執行報告 (個人簡閱版)"],
+                ["匯出時間", now],
                 [],
                 ["═══ 專案基本資訊 ═══"],
                 ["專案名稱", p.name],
-                ["客戶/單位", p.org || '(未設定)'],
+                ["客戶/單位", p.org || '-'],
+                ["專案進度", this.calculateProgress(p) + "%"],
                 ["專案狀態", p.status === 'completed' ? '已結案' : '進行中'],
                 [],
-                ["═══ 進度摘要 ═══"],
-                ["整體進度", `${stats.progress}%`],
-                ["總任務數", stats.total],
-                ["已完成", stats.done],
-                ["待辦中", stats.pending],
-                ["進行中", stats.ontrack],
-                ["有風險", stats.risk],
-                ["已卡關", stats.blocked],
-                [],
-                ["═══ 任務類型分布 ═══"],
-                ["里程碑數量", stats.deadlines],
-                ["一般任務", stats.tasks],
-                [],
-                ["═══ 風險評估 ═══"],
-                ["風險指數", stats.blocked > 0 ? 'HIGH (有卡關項目)' : stats.risk > 0 ? 'MED (有風險項目)' : 'LOW (正常運作)'],
-                ["高風險數", (p.risks || []).filter(r => r.level === 'high').length],
-                ["中風險數", (p.risks || []).filter(r => r.level === 'med').length],
-                ["低風險數", (p.risks || []).filter(r => r.level === 'low').length]
             ];
-            const wsDashboard = XLSX.utils.aoa_to_sheet(dashboardData);
-            setColWidths(wsDashboard, [20, 40]);
-            XLSX.utils.book_append_sheet(wb, wsDashboard, "儀表板");
 
-            // ============================================
-            // Sheet 2: 執行明細 (按日期排序)
-            // ============================================
-            const sortedActivities = [...p.activities].sort((a, b) => dayjs(a.date).diff(dayjs(b.date)));
-            const taskHeader = ["#", "日期", "月份", "類型", "任務名稱", "狀態", "負責人", "備註"];
-            const taskData = sortedActivities.map((a, idx) => [
-                idx + 1,
-                a.date,
-                dayjs(a.date).format('M') + '月',
-                a.type === 'deadline' ? '🔷 里程碑' : '📋 任務',
-                a.name,
-                this.statusText(a.status),
-                a.owner || '-',
-                a.note || ''
-            ]);
-            const wsTasks = XLSX.utils.aoa_to_sheet([taskHeader, ...taskData]);
-            setColWidths(wsTasks, [5, 12, 6, 12, 35, 8, 10, 30]);
-            XLSX.utils.book_append_sheet(wb, wsTasks, "執行明細");
+            // 2. 風險摘要 (如果有)
+            if (p.risks && p.risks.length > 0) {
+                data.push(["═══ 風險與對策 ═══"]);
+                data.push(["等級", "風險描述", "緩解對策"]);
+                p.risks.forEach(r => {
+                    const level = r.level === 'high' ? '🔴 高' : r.level === 'med' ? '🟡 中' : '🟢 低';
+                    data.push([level, r.desc, r.action]);
+                });
+                data.push([]);
+            }
 
-            // ============================================
-            // Sheet 3: 里程碑追蹤
-            // ============================================
-            const milestones = sortedActivities.filter(a => a.type === 'deadline');
-            const msHeader = ["#", "預定日期", "里程碑名稱", "狀態", "負責人", "距今天數", "備註"];
-            const msData = milestones.map((m, idx) => {
-                const daysFromNow = dayjs(m.date).diff(dayjs(), 'day');
-                let daysText = daysFromNow === 0 ? '今天' : daysFromNow > 0 ? `還有 ${daysFromNow} 天` : `已過 ${Math.abs(daysFromNow)} 天`;
-                return [
-                    idx + 1,
-                    m.date,
-                    m.name,
-                    this.statusText(m.status),
-                    m.owner || '-',
-                    daysText,
-                    m.note || ''
-                ];
+            // 3. 執行明細 (主要內容)
+            data.push(["═══ 執行任務明細 ═══"]);
+            data.push(["日期", "類型", "任務名稱", "狀態", "負責人", "備註"]);
+
+            const sorted = [...p.activities].sort((a, b) => dayjs(a.date).diff(dayjs(b.date)));
+            sorted.forEach(a => {
+                data.push([
+                    a.date,
+                    a.type === 'deadline' ? '🔷 里程碑' : '📋 任務',
+                    a.name,
+                    this.statusText(a.status),
+                    a.owner || '-',
+                    a.note || ''
+                ]);
             });
-            const wsMilestones = XLSX.utils.aoa_to_sheet([msHeader, ...msData]);
-            setColWidths(wsMilestones, [5, 12, 35, 8, 10, 15, 30]);
-            XLSX.utils.book_append_sheet(wb, wsMilestones, "里程碑追蹤");
 
-            // ============================================
-            // Sheet 4: 風險日誌
-            // ============================================
-            const riskLevelOrder = { high: 1, med: 2, low: 3 };
-            const sortedRisks = [...(p.risks || [])].sort((a, b) => riskLevelOrder[a.level] - riskLevelOrder[b.level]);
-            const riskHeader = ["#", "風險等級", "風險描述", "緩解對策"];
-            const riskData = sortedRisks.map((r, idx) => [
-                idx + 1,
-                r.level === 'high' ? '🔴 高' : r.level === 'med' ? '🟡 中' : '🟢 低',
-                r.desc,
-                r.action
-            ]);
-            if (riskData.length === 0) {
-                riskData.push(['-', '無登記風險', '-', '-']);
+            // 4. 利害關係人 (如果有)
+            if (p.contacts && p.contacts.length > 0) {
+                data.push([]);
+                data.push(["═══ 利害關係人 ═══"]);
+                data.push(["角色/姓名", "聯絡資訊"]);
+                p.contacts.forEach(c => {
+                    data.push([c.name, c.info]);
+                });
             }
-            const wsRisks = XLSX.utils.aoa_to_sheet([riskHeader, ...riskData]);
-            setColWidths(wsRisks, [5, 12, 40, 40]);
-            XLSX.utils.book_append_sheet(wb, wsRisks, "風險日誌");
 
-            // ============================================
-            // Sheet 5: 利害關係人
-            // ============================================
-            const contactHeader = ["#", "姓名/角色", "聯絡資訊/說明"];
-            const contactData = (p.contacts || []).map((c, idx) => [
-                idx + 1,
-                c.name,
-                c.info
-            ]);
-            if (contactData.length === 0) {
-                contactData.push(['-', '無登記關係人', '-']);
-            }
-            const wsContacts = XLSX.utils.aoa_to_sheet([contactHeader, ...contactData]);
-            setColWidths(wsContacts, [5, 25, 40]);
-            XLSX.utils.book_append_sheet(wb, wsContacts, "利害關係人");
+            // 建立 WorkSheet
+            const ws = XLSX.utils.aoa_to_sheet(data);
 
-            // ============================================
-            // Sheet 6: 月份摘要
-            // ============================================
-            const monthSummaryHeader = ["月份", "任務數", "里程碑", "已完成", "進行中", "有風險", "卡關"];
-            const monthSummaryData = [];
-            for (let m = 1; m <= 12; m++) {
-                const monthActs = p.activities.filter(a => dayjs(a.date).month() + 1 === m);
-                if (monthActs.length > 0) {
-                    monthSummaryData.push([
-                        `${m}月`,
-                        monthActs.length,
-                        monthActs.filter(a => a.type === 'deadline').length,
-                        monthActs.filter(a => a.status === 'done').length,
-                        monthActs.filter(a => a.status === 'ontrack').length,
-                        monthActs.filter(a => a.status === 'risk').length,
-                        monthActs.filter(a => a.status === 'blocked').length
-                    ]);
-                }
-            }
-            const wsMonthly = XLSX.utils.aoa_to_sheet([monthSummaryHeader, ...monthSummaryData]);
-            setColWidths(wsMonthly, [8, 8, 10, 10, 10, 10, 8]);
-            XLSX.utils.book_append_sheet(wb, wsMonthly, "月份摘要");
+            // 設定欄寬
+            ws['!cols'] = [
+                { wch: 15 }, // A: 日期/標籤
+                { wch: 12 }, // B: 類型/內容
+                { wch: 40 }, // C: 名稱/對策
+                { wch: 10 }, // D: 狀態
+                { wch: 12 }, // E: 負責人
+                { wch: 30 }  // F: 備註
+            ];
+
+            XLSX.utils.book_append_sheet(wb, ws, "專案摘要匯總");
 
             // 匯出檔案
-            const fileName = `${p.name}_專案報告_${dayjs().format('YYYYMMDD')}.xlsx`;
-            XLSX.writeFile(wb, fileName);
-            this.showToastMsg(`已匯出：${fileName}`);
+            const safeName = p.name.replace(/[\\/:*?"<>|]/g, '_');
+            const fileName = `${safeName}_簡報_${dayjs().format('YYYYMMDD')}.xlsx`;
+
+            // Revert back to writeFile which is generally more robust for extensions if filename is good
+            // Explicitly setting bookType to xlsx
+            try {
+                XLSX.writeFile(wb, fileName, { bookType: 'xlsx' });
+                this.showToastMsg(`已匯出報表：${fileName}`);
+            } catch (e) {
+                console.error(e);
+                alert("匯出失敗，請檢查瀏覽器設定");
+            }
         },
 
         // --- 資料匯入匯出 ---
@@ -555,7 +504,7 @@ createApp({
             link.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data));
             link.download = `PM_System_Backup_${dayjs().format('YYYYMMDD')}.json`;
             link.click();
-            this.showToastMsg('完整系統備份已下載');
+            this.showToastMsg('完整系統備份 (JSON) 已下載');
         },
 
         importData(event) {
@@ -583,6 +532,35 @@ createApp({
             this.toastMessage = msg;
             this.showToast = true;
             setTimeout(() => this.showToast = false, 2500);
+        },
+
+        // --- 櫻花特效邏輯 ---
+        createPetals() {
+            const container = document.getElementById('sakura-container');
+            if (!container) return;
+            container.innerHTML = ''; // 清空預設內容
+
+            const petalCount = 30; // 花瓣數量
+            for (let i = 0; i < petalCount; i++) {
+                const petal = document.createElement('div');
+                petal.className = 'petal';
+
+                // 隨機屬性
+                const size = Math.random() * 15 + 10 + 'px';
+                const left = Math.random() * 100 + '%';
+                const delay = Math.random() * 10 + 's';
+                const duration = Math.random() * 15 + 10 + 's';
+                const rotate = Math.random() * 360 + 'deg';
+
+                petal.style.width = size;
+                petal.style.height = size;
+                petal.style.left = left;
+                petal.style.animationDelay = delay;
+                petal.style.animationDuration = duration;
+                petal.style.transform = `rotate(${rotate})`;
+
+                container.appendChild(petal);
+            }
         }
     },
 
@@ -595,14 +573,23 @@ createApp({
             this.selectedPid = this.projects[0].id;
         }
 
-        // 初始化深色模式
-        if (this.theme === 'dark') {
-            document.documentElement.classList.add('dark');
+        // 初始化森林模式
+        if (this.theme === 'forest') {
+            document.documentElement.classList.add('forest');
         }
 
         // 註冊鍵盤事件監聽器
         document.addEventListener('keydown', this.handleKeyboard);
+
+        // 如果初始是櫻花模式，啟動花瓣
+        if (this.theme === 'sakura') {
+            this.createPetals();
+        }
+
+        // 初始化字體大小
+        document.documentElement.style.fontSize = this.fontSize + 'px';
     },
+
 
     beforeUnmount() {
         document.removeEventListener('keydown', this.handleKeyboard);
