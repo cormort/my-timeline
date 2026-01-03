@@ -7,502 +7,568 @@
    CSS 變數定義
    ============================================ */
 :root {
-    --font-main: 'Helvetica Neue', Helvetica, Arial, 'Microsoft JhengHei', sans-serif;
-    --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    --gradient-success: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-    --glass-bg: rgba(255, 255, 255, 0.7);
-    --glass-bg-forest: rgba(255, 255, 255, 0.9);
+    :root {
+        --font-main: 'Inter', 'Helvetica Neue', Helvetica, Arial, 'Microsoft JhengHei', sans-serif;
+        --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        --gradient-success: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
 
-    /* Forest Theme Colors */
-    --forest-primary: #2d6a4f;
-    --forest-secondary: #40916c;
-    --forest-accent: #95d5b2;
-    --forest-text: #1b4332;
-    --forest-border: rgba(45, 106, 79, 0.3);
+        /* Enhanced Glassmorphism */
+        --glass-bg: rgba(255, 255, 255, 0.65);
+        --glass-border: rgba(255, 255, 255, 0.4);
+        --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+        --glass-blur: blur(12px);
 
-    /* Sakura Theme Colors - Enhanced for V2.0 */
-    --sakura-primary: #ff85a1;
-    --sakura-secondary: #fbb1bd;
-    --sakura-accent: #ff0a54;
-    --sakura-gradient: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
-    --sakura-text: #5d4037;
-    --sakura-bg-soft: #fff1f3;
-    --sakura-border: rgba(255, 133, 161, 0.3);
-}
+        /* Forest Theme Tweaks */
+        --glass-bg-forest: rgba(255, 255, 255, 0.92);
+        /* Slightly more opaque for readability */
 
-/* ============================================
+        /* Forest Theme Colors */
+        --forest-primary: #2d6a4f;
+        --forest-secondary: #40916c;
+        --forest-accent: #95d5b2;
+        --forest-text: #1b4332;
+        --forest-border: rgba(45, 106, 79, 0.3);
+
+        /* Sakura Theme Colors - Enhanced for V2.0 */
+        --sakura-primary: #ff85a1;
+        --sakura-secondary: #fbb1bd;
+        --sakura-accent: #ff0a54;
+        --sakura-gradient: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+        --sakura-text: #5d4037;
+        --sakura-bg-soft: #fff1f3;
+        --sakura-border: rgba(255, 133, 161, 0.3);
+    }
+
+    /* ============================================
    基礎樣式
    ============================================ */
-[v-cloak] {
-    display: none !important;
-}
-
-html {
-    font-family: var(--font-main);
-    font-size: 16px;
-}
-
-body {
-    line-height: 1.6;
-    overflow-y: scroll;
-}
-
-/* ============================================
-   過渡與動畫效果
-   ============================================ */
-.transition-theme {
-    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.hover-lift {
-    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s;
-}
-
-.hover-lift:hover {
-    transform: translateY(-4px) scale(1.01);
-    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.15);
-}
-
-.diamond {
-    transform: rotate(45deg);
-}
-
-/* ============================================
-   玻璃擬態效果 (Glassmorphism)
-   ============================================ */
-.glass {
-    background: var(--glass-bg);
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.4);
-}
-
-.forest .glass {
-    background: var(--glass-bg-forest);
-    border-color: var(--forest-border);
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
-}
-
-.sakura .glass {
-    background: var(--glass-bg-sakura);
-    border-color: rgba(255, 126, 179, 0.2);
-}
-
-/* ============================================
-   Logo 呼吸動畫
-   ============================================ */
-@keyframes logo-pulse {
-
-    0%,
-    100% {
-        box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4), 0 10px 25px -3px rgba(99, 102, 241, 0.5);
-    }
-
-    50% {
-        box-shadow: 0 0 30px 5px rgba(99, 102, 241, 0.3), 0 15px 35px -5px rgba(99, 102, 241, 0.6);
-    }
-}
-
-.logo-animated {
-    animation: logo-pulse 3s ease-in-out infinite;
-}
-
-/* ============================================
-   卡片漸變邊框
-   ============================================ */
-.card-gradient-border {
-    position: relative;
-    background: linear-gradient(white, white) padding-box, var(--gradient-primary) border-box;
-    border: 2px solid transparent;
-}
-
-.forest .card-gradient-border {
-    background: linear-gradient(#ffffff, #ffffff) padding-box, var(--gradient-primary) border-box;
-}
-
-/* ============================================
-   狀態動畫 - 卡關脈動
-   ============================================ */
-@keyframes pulse-red {
-    0% {
-        box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.7);
-    }
-
-    70% {
-        box-shadow: 0 0 0 8px rgba(244, 63, 94, 0);
-    }
-
-    100% {
-        box-shadow: 0 0 0 0 rgba(244, 63, 94, 0);
-    }
-}
-
-.status-blocked {
-    animation: pulse-red 1.5s infinite;
-}
-
-/* ============================================
-   列印樣式
-   ============================================ */
-@media print {
-    .no-print {
+    [v-cloak] {
         display: none !important;
     }
 
-    body,
-    .print-card {
-        background: white !important;
-        color: black !important;
-        box-shadow: none !important;
-        border: none !important;
+    html {
+        font-family: var(--font-main);
+        font-size: 16px;
     }
 
-    /* Force all text to black in print mode to handle themes */
-    .print-card * {
-        color: black !important;
-        background: transparent !important;
-        box-shadow: none !important;
-        text-shadow: none !important;
+    body {
+        line-height: 1.6;
+        overflow-y: scroll;
     }
 
-    /* Keep simple borders for tables/grids */
-    .print-card .border,
-    .print-card .border-t,
-    .print-card .border-b,
-    .print-card .border-l,
-    .print-card .border-r {
-        border-color: #ddd !important;
+    /* ============================================
+   過渡與動畫效果
+   ============================================ */
+    .transition-theme {
+        transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    .print-area {
-        width: 100% !important;
-        margin: 0 !important;
-        padding: 0 !important;
+    .hover-lift {
+        transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s;
     }
-}
 
-/* ============================================
+    .hover-lift:hover {
+        transform: translateY(-4px) scale(1.01);
+        box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.15);
+    }
+
+    .diamond {
+        transform: rotate(45deg);
+    }
+
+    /* ============================================
+   玻璃擬態效果 (Glassmorphism)
+   ============================================ */
+    .glass {
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px) saturate(180%);
+        -webkit-backdrop-filter: blur(20px) saturate(180%);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+    }
+
+    .forest .glass {
+        background: var(--glass-bg-forest);
+        border-color: var(--forest-border);
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .sakura .glass {
+        background: var(--glass-bg-sakura);
+        border-color: rgba(255, 126, 179, 0.2);
+    }
+
+    /* ============================================
+   Logo 呼吸動畫
+   ============================================ */
+    @keyframes logo-pulse {
+
+        0%,
+        100% {
+            box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4), 0 10px 25px -3px rgba(99, 102, 241, 0.5);
+        }
+
+        50% {
+            box-shadow: 0 0 30px 5px rgba(99, 102, 241, 0.3), 0 15px 35px -5px rgba(99, 102, 241, 0.6);
+        }
+    }
+
+    .logo-animated {
+        animation: logo-pulse 3s ease-in-out infinite;
+    }
+
+    /* ============================================
+   卡片漸變邊框
+   ============================================ */
+    .card-gradient-border {
+        position: relative;
+        background: linear-gradient(white, white) padding-box, var(--gradient-primary) border-box;
+        border: 2px solid transparent;
+    }
+
+    .forest .card-gradient-border {
+        background: linear-gradient(#ffffff, #ffffff) padding-box, var(--gradient-primary) border-box;
+    }
+
+    /* ============================================
+   狀態動畫 - 卡關脈動
+   ============================================ */
+    @keyframes pulse-red {
+        0% {
+            box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.7);
+        }
+
+        70% {
+            box-shadow: 0 0 0 8px rgba(244, 63, 94, 0);
+        }
+
+        100% {
+            box-shadow: 0 0 0 0 rgba(244, 63, 94, 0);
+        }
+    }
+
+    .status-blocked {
+        animation: pulse-red 1.5s infinite;
+    }
+
+    /* ============================================
+   列印樣式
+   ============================================ */
+    @media print {
+        .no-print {
+            display: none !important;
+        }
+
+        body,
+        .print-card {
+            background: white !important;
+            color: black !important;
+            box-shadow: none !important;
+            border: none !important;
+        }
+
+        /* Force all text to black in print mode to handle themes */
+        .print-card * {
+            color: black !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            text-shadow: none !important;
+        }
+
+        /* Keep simple borders for tables/grids */
+        .print-card .border,
+        .print-card .border-t,
+        .print-card .border-b,
+        .print-card .border-l,
+        .print-card .border-r {
+            border-color: #ddd !important;
+        }
+
+        .print-area {
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+    }
+
+    /* ============================================
    滾動條美化
    ============================================ */
-::-webkit-scrollbar {
-    height: 6px;
-    width: 6px;
-}
+    ::-webkit-scrollbar {
+        height: 6px;
+        width: 6px;
+    }
 
-::-webkit-scrollbar-track {
-    background: transparent;
-}
+    ::-webkit-scrollbar-track {
+        background: transparent;
+    }
 
-::-webkit-scrollbar-thumb {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.5), rgba(139, 92, 246, 0.5));
-    border-radius: 10px;
-}
+    ::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.5), rgba(139, 92, 246, 0.5));
+        border-radius: 10px;
+    }
 
-.sakura ::-webkit-scrollbar-thumb {
-    background: linear-gradient(135deg, rgba(255, 126, 179, 0.5), rgba(251, 194, 235, 0.5));
-}
+    .sakura ::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, rgba(255, 126, 179, 0.5), rgba(251, 194, 235, 0.5));
+    }
 
-::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.8), rgba(139, 92, 246, 0.8));
-}
+    ::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.8), rgba(139, 92, 246, 0.8));
+    }
 
-/* ============================================
+    /* ============================================
    Toast 通知動畫
    ============================================ */
-@keyframes slideUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px) translateX(-50%) scale(0.9);
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px) translateX(-50%) scale(0.9);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0) translateX(-50%) scale(1);
+        }
     }
 
-    to {
-        opacity: 1;
-        transform: translateY(0) translateX(-50%) scale(1);
+    .animate-toast {
+        animation: slideUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
     }
-}
 
-.animate-toast {
-    animation: slideUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-}
-
-/* ============================================
+    /* ============================================
    淡入動畫
    ============================================ */
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 
-    to {
-        opacity: 1;
-        transform: translateY(0);
+    .animate-fade-in {
+        animation: fadeIn 0.4s ease-out forwards;
     }
-}
 
-.animate-fade-in {
-    animation: fadeIn 0.4s ease-out forwards;
-}
-
-/* ============================================
+    /* ============================================
    縮放動畫
    ============================================ */
-@keyframes scaleUp {
-    from {
-        opacity: 0;
-        transform: scale(0.95);
+    @keyframes scaleUp {
+        from {
+            opacity: 0;
+            transform: scale(0.95);
+        }
+
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
     }
 
-    to {
-        opacity: 1;
-        transform: scale(1);
+    .animate-scale-up {
+        animation: scaleUp 0.3s ease-out forwards;
     }
-}
 
-.animate-scale-up {
-    animation: scaleUp 0.3s ease-out forwards;
-}
-
-/* ============================================
+    /* ============================================
    閃爍高亮
    ============================================ */
-@keyframes highlight-flash {
+    @keyframes highlight-flash {
 
-    0%,
-    100% {
-        background-color: transparent;
+        0%,
+        100% {
+            background-color: transparent;
+        }
+
+        50% {
+            background-color: rgba(99, 102, 241, 0.1);
+        }
     }
 
-    50% {
-        background-color: rgba(99, 102, 241, 0.1);
+    .highlight-new {
+        animation: highlight-flash 1s ease-in-out 2;
     }
-}
 
-.highlight-new {
-    animation: highlight-flash 1s ease-in-out 2;
-}
-
-/* ============================================
+    /* ============================================
    進度條動畫
    ============================================ */
-@keyframes progress-shine {
-    from {
+    @keyframes progress-shine {
+        from {
+            left: -100%;
+        }
+
+        to {
+            left: 100%;
+        }
+    }
+
+    .progress-animated::after {
+        content: '';
+        position: absolute;
+        top: 0;
         left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+        animation: progress-shine 2s infinite;
     }
 
-    to {
-        left: 100%;
-    }
-}
-
-.progress-animated::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-    animation: progress-shine 2s infinite;
-}
-
-/* ============================================
+    /* ============================================
    輸入框焦點效果
    ============================================ */
-input:focus,
-textarea:focus,
-select:focus,
-[tabindex="0"]:focus-visible {
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.4);
-}
+    input:focus,
+    textarea:focus,
+    select:focus,
+    [tabindex="0"]:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.4);
+    }
 
-.forest [tabindex="0"]:focus-visible {
-    box-shadow: 0 0 0 3px rgba(149, 213, 178, 0.5);
-}
+    .forest [tabindex="0"]:focus-visible {
+        box-shadow: 0 0 0 3px rgba(149, 213, 178, 0.5);
+    }
 
-.sakura [tabindex="0"]:focus-visible {
-    box-shadow: 0 0 0 3px rgba(244, 114, 182, 0.5);
-}
+    .sakura [tabindex="0"]:focus-visible {
+        box-shadow: 0 0 0 3px rgba(244, 114, 182, 0.5);
+    }
 
-/* ============================================
+    /* ============================================
    按鈕波紋效果
    ============================================ */
-.btn-ripple {
-    position: relative;
-    overflow: hidden;
-}
+    .btn-ripple {
+        position: relative;
+        overflow: hidden;
+    }
 
-.btn-ripple::after {
-    content: '';
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    top: 0;
-    left: 0;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
-    transform: scale(0);
-    transition: transform 0.4s ease-out;
-}
+    .btn-ripple::after {
+        content: '';
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+        transform: scale(0);
+        transition: transform 0.4s ease-out;
+    }
 
-.btn-ripple:active::after {
-    transform: scale(2.5);
-}
+    .btn-ripple:active::after {
+        transform: scale(2.5);
+    }
 
-/* ============================================
+    /* ============================================
    今日標記線動畫
    ============================================ */
-@keyframes today-pulse {
+    @keyframes today-pulse {
 
-    0%,
-    100% {
-        opacity: 0.5;
+        0%,
+        100% {
+            opacity: 0.5;
+        }
+
+        50% {
+            opacity: 1;
+        }
     }
 
-    50% {
-        opacity: 1;
+    .today-line {
+        animation: today-pulse 2s ease-in-out infinite;
     }
-}
 
-.today-line {
-    animation: today-pulse 2s ease-in-out infinite;
-}
+    .sakura .today-line {
+        background: linear-gradient(to b, #ff7eb3, #ff7eb3, transparent);
+    }
 
-.sakura .today-line {
-    background: linear-gradient(to b, #ff7eb3, #ff7eb3, transparent);
-}
-
-/* ============================================
+    /* ============================================
    快捷鍵提示樣式
    ============================================ */
-.kbd {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 20px;
-    height: 20px;
-    padding: 0 5px;
-    font-size: 11px;
-    font-weight: 600;
-    background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
-    border: 1px solid #cbd5e1;
-    border-radius: 4px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-}
+    .kbd {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 20px;
+        height: 20px;
+        padding: 0 5px;
+        font-size: 11px;
+        font-weight: 600;
+        background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+        border: 1px solid #cbd5e1;
+        border-radius: 4px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
 
-.forest .kbd {
-    background: linear-gradient(180deg, #2d6a4f 0%, #1b4332 100%);
-    border-color: #40916c;
-    color: #d8f3dc;
-}
+    .forest .kbd {
+        background: linear-gradient(180deg, #2d6a4f 0%, #1b4332 100%);
+        border-color: #40916c;
+        color: #d8f3dc;
+    }
 
-/* ============================================
+    /* ============================================
    Sakura 專屬細節優化
    ============================================ */
-.sakura .glass {
-    background: rgba(255, 255, 255, 0.85);
-    border-color: var(--sakura-border);
-    box-shadow: 0 8px 32px 0 rgba(255, 182, 193, 0.2);
-}
+    .sakura .glass {
+        background: rgba(255, 255, 255, 0.85);
+        border-color: var(--sakura-border);
+        box-shadow: 0 8px 32px 0 rgba(255, 182, 193, 0.2);
+    }
 
-.sakura .btn-ripple {
-    border-radius: 99px;
-    /* Sakura 主題按鈕更圓潤 */
-}
+    .sakura .btn-ripple {
+        border-radius: 99px;
+        /* Sakura 主題按鈕更圓潤 */
+    }
 
-/* ============================================
+    /* ============================================
    櫻花飄落動畫 (Falling Sakura Petals)
    ============================================ */
-.sakura-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 0;
-    overflow: hidden;
-    display: none;
-}
+    .sakura-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 0;
+        overflow: hidden;
+        display: none;
+    }
 
-.sakura .sakura-container {
-    display: block;
-}
+    .sakura .sakura-container {
+        display: block;
+    }
 
-.petal {
-    position: absolute;
-    background-color: #ffb7c5;
-    border-radius: 150% 0 150% 0;
-    opacity: 0.7;
-    z-index: 0;
-    animation: fall linear infinite;
-}
+    .petal {
+        position: absolute;
+        background-color: #ffb7c5;
+        border-radius: 150% 0 150% 0;
+        opacity: 0.7;
+        z-index: 0;
+        animation: fall linear infinite;
+    }
 
-.petal::after {
-    content: '';
-    position: absolute;
-    top: -10%;
-    left: -10%;
-    width: 100%;
-    height: 100%;
-    border-radius: 150% 0 150% 0;
-    background-color: #ff91a4;
-    transform: rotate(15deg);
-}
-
-@keyframes fall {
-    0% {
+    .petal::after {
+        content: '';
+        position: absolute;
         top: -10%;
-        transform: translateX(0) rotate(0deg);
+        left: -10%;
+        width: 100%;
+        height: 100%;
+        border-radius: 150% 0 150% 0;
+        background-color: #ff91a4;
+        transform: rotate(15deg);
     }
 
-    100% {
-        top: 110%;
-        transform: translateX(100px) rotate(360deg);
-    }
-}
+    @keyframes fall {
+        0% {
+            top: -10%;
+            transform: translateX(0) rotate(0deg);
+        }
 
-/* ============================================
+        100% {
+            top: 110%;
+            transform: translateX(100px) rotate(360deg);
+        }
+    }
+
+    /* ============================================
    拖曳排序樣式 (Drag & Drop)
    ============================================ */
-.draggable-item {
-    cursor: grab;
-    transition: transform 0.2s, background-color 0.2s, box-shadow 0.2s;
-}
+    .draggable-item {
+        cursor: grab;
+        transition: transform 0.2s, background-color 0.2s, box-shadow 0.2s;
+    }
 
-.draggable-item.dragging {
-    opacity: 0.5;
-    background: rgba(99, 102, 241, 0.1);
-    border: 2px dashed #6366f1;
-    transform: scale(0.98);
-}
+    .draggable-item.dragging {
+        opacity: 0.5;
+        background: rgba(99, 102, 241, 0.1);
+        border: 2px dashed #6366f1;
+        transform: scale(0.98);
+    }
 
-.forest .draggable-item.dragging {
-    background: rgba(149, 213, 178, 0.1);
-    border-color: #40916c;
-}
+    .forest .draggable-item.dragging {
+        background: rgba(149, 213, 178, 0.1);
+        border-color: #40916c;
+    }
 
-.sakura .draggable-item.dragging {
-    background: rgba(255, 183, 197, 0.1);
-    border-color: #ff85a1;
-}
+    .sakura .draggable-item.dragging {
+        background: rgba(255, 183, 197, 0.1);
+        border-color: #ff85a1;
+    }
 
-.drag-handle {
-    cursor: grab;
-    color: #cbd5e1;
-    transition: color 0.2s;
-    padding: 0 4px;
-}
+    .drag-handle {
+        cursor: grab;
+        color: #cbd5e1;
+        transition: color 0.2s;
+        padding: 0 4px;
+    }
 
-.drag-handle:hover {
-    color: #64748b;
-}
+    .drag-handle:hover {
+        color: #64748b;
+    }
 
-.forest .drag-handle:hover {
-    color: #2d6a4f;
-}
+    .forest .drag-handle:hover {
+        color: #2d6a4f;
+    }
 
-.draggable-source {
-    opacity: 0.3 !important;
-}
+    .draggable-source {
+        opacity: 0.3 !important;
+    }
+
+    /* ============================================
+   UI Polish - Micro-interactions & Scrollbars
+   ============================================ */
+
+    /* Custom Scrollbar */
+    .custom-scroll::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+
+    .custom-scroll::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .custom-scroll::-webkit-scrollbar-thumb {
+        background-color: rgba(156, 163, 175, 0.3);
+        border-radius: 999px;
+        transition: background-color 0.2s;
+    }
+
+    .custom-scroll::-webkit-scrollbar-thumb:hover {
+        background-color: rgba(156, 163, 175, 0.5);
+    }
+
+    .dark .custom-scroll::-webkit-scrollbar-thumb {
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .dark .custom-scroll::-webkit-scrollbar-thumb:hover {
+        background-color: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Hover Lift Effect */
+    .hover-lift {
+        transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+    }
+
+    .hover-lift:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Smooth Focus Ring */
+    input:focus,
+    select:focus,
+    textarea:focus {
+        transition: box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    /* Glass Refinements */
+    .glass {
+        backdrop-filter: var(--glass-blur);
+        -webkit-backdrop-filter: var(--glass-blur);
+        border: 1px solid var(--glass-border);
+        box-shadow: var(--glass-shadow);
+    }
