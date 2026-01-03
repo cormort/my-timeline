@@ -462,3 +462,47 @@ select:focus,
         transform: translateX(100px) rotate(360deg);
     }
 }
+
+/* ============================================
+   拖曳排序樣式 (Drag & Drop)
+   ============================================ */
+.draggable-item {
+    cursor: grab;
+    transition: transform 0.2s, background-color 0.2s, box-shadow 0.2s;
+}
+
+.draggable-item.dragging {
+    opacity: 0.5;
+    background: rgba(99, 102, 241, 0.1);
+    border: 2px dashed #6366f1;
+    transform: scale(0.98);
+}
+
+.forest .draggable-item.dragging {
+    background: rgba(149, 213, 178, 0.1);
+    border-color: #40916c;
+}
+
+.sakura .draggable-item.dragging {
+    background: rgba(255, 183, 197, 0.1);
+    border-color: #ff85a1;
+}
+
+.drag-handle {
+    cursor: grab;
+    color: #cbd5e1;
+    transition: color 0.2s;
+    padding: 0 4px;
+}
+
+.drag-handle:hover {
+    color: #64748b;
+}
+
+.forest .drag-handle:hover {
+    color: #2d6a4f;
+}
+
+.draggable-source {
+    opacity: 0.3 !important;
+}
