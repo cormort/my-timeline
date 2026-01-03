@@ -10,10 +10,18 @@
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
     <!-- Day.js -->
     <script src="https://unpkg.com/dayjs@1/dayjs.min.js"></script>
     <!-- SheetJS (用於 Excel 匯出) -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <!-- Chart.js (用於圖表顯示) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -32,6 +40,10 @@
             class="fixed bottom-8 left-1/2 z-[99] bg-slate-800 text-white px-6 py-3 rounded-lg font-bold shadow-2xl flex items-center gap-3 animate-toast">
             <i class="fa-solid fa-circle-check text-emerald-400"></i>
             <span>{{ toastMessage }}</span>
+            <button v-if="toastHasUndo" @click="handleUndo"
+                class="ml-2 px-2 py-0.5 bg-slate-600 hover:bg-slate-500 rounded text-xs uppercase tracking-wide transition-colors">
+                <i class="fa-solid fa-rotate-left mr-1"></i> 復原
+            </button>
         </div>
 
         <!-- 選擇範本 Modal -->
@@ -410,12 +422,24 @@
                 <div class="flex justify-between items-center mb-6">
                     <h3 class="font-black text-lg text-slate-700 dark:text-slate-200 sakura:text-pink-700">📌 專案里程碑 & 任務
                     </h3>
-                    <button @click="addActivity"
-                        class="px-4 py-2 bg-indigo-600 sakura:bg-pink-500 text-white rounded-lg hover:bg-indigo-500 sakura:hover:bg-pink-400 shadow-lg font-bold text-xs flex items-center gap-2"><i
-                            class="fa-solid fa-plus"></i> ✨ 新增任務</button>
+                    <div class="flex gap-3">
+                        <div
+                            class="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-slate-700">
+                            <button @click="viewMode = 'list'"
+                                :class="['px-3 py-1 rounded-md text-xs font-bold transition-all', viewMode === 'list' ? 'bg-white dark:bg-slate-700 shadow text-indigo-600' : 'text-slate-400']"><i
+                                    class="fa-solid fa-list ul"></i></button>
+                            <button @click="viewMode = 'board'"
+                                :class="['px-3 py-1 rounded-md text-xs font-bold transition-all', viewMode === 'board' ? 'bg-white dark:bg-slate-700 shadow text-indigo-600' : 'text-slate-400']"><i
+                                    class="fa-solid fa-table-columns"></i></button>
+                        </div>
+                        <button @click="addActivity"
+                            class="px-4 py-2 bg-indigo-600 sakura:bg-pink-500 text-white rounded-lg hover:bg-indigo-500 sakura:hover:bg-pink-400 shadow-lg font-bold text-xs flex items-center gap-2"><i
+                                class="fa-solid fa-plus"></i> ✨ 新增任務</button>
+                    </div>
                 </div>
 
-                <div class="space-y-4">
+                <!-- 列表視圖 -->
+                <div v-if="viewMode === 'list'" class="space-y-4">
                     <div v-for="(act, idx) in sortedActivities" :key="act.id" draggable="true"
                         @dragstart="handleDragStart(idx)" @dragenter="handleDragEnter(idx)" @dragover.prevent
                         @dragend="handleDragEnd"
@@ -470,6 +494,40 @@
                             <textarea v-model="act.note"
                                 class="w-full h-20 bg-slate-50 dark:bg-slate-900 rounded-lg p-3 text-xs outline-none border border-slate-200 resize-none"
                                 placeholder="備註..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 看板視圖 -->
+                <div v-else class="grid grid-cols-1 md:grid-cols-4 gap-4 overflow-x-auto pb-4">
+                    <div v-for="(col, key) in kanbanColumns" :key="key" @dragover.prevent @drop="handleKanbanDrop(key)"
+                        class="min-w-[250px] bg-slate-100/50 dark:bg-slate-800/50 rounded-2xl p-4 border border-slate-200 dark:border-slate-700/50 flex flex-col h-[600px] transition-colors hover:bg-slate-100 dark:hover:bg-slate-800/80">
+                        <div class="flex items-center gap-2 mb-4 text-xs font-black uppercase text-slate-500">
+                            <i :class="col.icon"></i> {{ col.title }}
+                            <span
+                                class="ml-auto bg-slate-200 dark:bg-slate-700 text-slate-500 px-2 py-0.5 rounded-full text-[10px]">{{
+                                col.items.length }}</span>
+                        </div>
+                        <div class="flex-1 overflow-y-auto space-y-3 custom-scroll pr-1">
+                            <div v-for="act in col.items" :key="act.id" draggable="true"
+                                @dragstart="handleKanbanDragStart(act)" @dragend="handleKanbanDragEnd"
+                                :class="[themeClasses.innerCard, 'p-3 rounded-xl border shadow-sm cursor-grab active:cursor-grabbing hover-lift']">
+                                <div class="flex justify-between items-start mb-2">
+                                    <div :class="['w-2 h-2 rounded-full mt-1.5', getStatusDot(act.status)]"></div>
+                                    <div class="flex-1 mx-2 text-sm font-bold leading-tight">{{ act.name || '未命名任務' }}
+                                    </div>
+                                    <button @click="removeActivityById(act.id)"
+                                        class="text-slate-300 hover:text-rose-500"><i
+                                            class="fa-solid fa-xmark"></i></button>
+                                </div>
+                                <div class="flex items-center gap-2 text-[10px] text-slate-400 mt-2">
+                                    <span v-if="act.owner"
+                                        class="bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded"><i
+                                            class="fa-solid fa-user mr-1"></i>{{ act.owner }}</span>
+                                    <span class="bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded">{{
+                                        dayjs(act.date).format('MM/DD') }}</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -532,6 +590,23 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- 圖表區塊 -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+                    <div :class="[themeClasses.innerCard, 'p-6 rounded-2xl border shadow-sm relative']">
+                        <h4 class="text-xs font-black opacity-40 uppercase mb-4">任務狀態分佈</h4>
+                        <div class="relative h-64 w-full flex items-center justify-center">
+                            <canvas id="statusChart"></canvas>
+                        </div>
+                    </div>
+                    <div :class="[themeClasses.innerCard, 'p-6 rounded-2xl border shadow-sm relative']">
+                        <h4 class="text-xs font-black opacity-40 uppercase mb-4">風險等級佔比</h4>
+                        <div class="relative h-64 w-full flex items-center justify-center">
+                            <canvas id="riskChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="space-y-8">
                     <h4 class="text-xs font-black opacity-40 uppercase border-b pb-2">執行明細</h4>
                     <div v-for="month in 12" :key="month" class="flex gap-6 break-inside-avoid">
