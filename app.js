@@ -39,6 +39,7 @@ createApp({
             currentTab: 'project',
             selectedPid: null,
             selectedTplId: null,
+            dragIndex: null,
             showToast: false,
             toastMessage: '',
             listFilter: 'active',
@@ -79,7 +80,8 @@ createApp({
             return this.projects.find(p => p.id === this.selectedPid);
         },
         sortedActivities() {
-            return this.activeProject?.activities.sort((a, b) => dayjs(a.date).diff(dayjs(b.date))) || [];
+            // 移除自動排序，改為依照陣列順序 (支援拖曳排序)
+            return this.activeProject?.activities || [];
         },
         isArchived() {
             return this.activeProject?.status === 'completed';
@@ -532,6 +534,28 @@ createApp({
             this.toastMessage = msg;
             this.showToast = true;
             setTimeout(() => this.showToast = false, 2500);
+        },
+
+        // --- 拖曳排序 (Drag & Drop) ---
+        handleDragStart(index) {
+            this.dragIndex = index;
+        },
+
+        handleDragEnter(index) {
+            if (this.dragIndex === null || this.dragIndex === index) return;
+
+            // 執行陣列元素移動
+            const item = this.activeProject.activities.splice(this.dragIndex, 1)[0];
+            this.activeProject.activities.splice(index, 0, item);
+
+            // 更新當前索引，確保連續拖曳正確
+            this.dragIndex = index;
+        },
+
+        handleDragEnd() {
+            this.dragIndex = null;
+            // 短暫閃爍提示儲存 (雖然 watch 會自動存，但給個反饋)
+            // this.showToastMsg('順序已更新'); 
         },
 
         // --- 櫻花特效邏輯 ---
