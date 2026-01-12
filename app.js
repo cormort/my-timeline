@@ -128,9 +128,15 @@ createApp({
       listFilter: "active",
       showNewProjectModal: false,
       projects: JSON.parse(localStorage.getItem("pm-projects-v2")) || [],
-      templates: JSON.parse(localStorage.getItem("pm-templates-v1")) || [
-        JSON.parse(JSON.stringify(DEFAULT_TEMPLATE)),
-      ],
+      templates: (() => {
+        const saved = JSON.parse(localStorage.getItem("pm-templates-v1")) || [];
+        // 確保預設範本始終存在
+        const defaultExists = saved.some(t => t.id === MILESTONE_TEMPLATE.id);
+        if (!defaultExists) {
+          saved.unshift(JSON.parse(JSON.stringify(MILESTONE_TEMPLATE)));
+        }
+        return saved.length > 0 ? saved : [JSON.parse(JSON.stringify(MILESTONE_TEMPLATE))];
+      })(),
       searchQuery: "",
       fontSize: parseInt(localStorage.getItem("pm-font-size")) || 16,
       tabs: [
@@ -321,6 +327,38 @@ createApp({
       return this.activeProject.activities.filter(
         (a) => dayjs(a.date).month() + 1 === month
       );
+    },
+
+    // --- Deadline 警告計算 ---
+    getDeadlineWarning(act) {
+      // 已完成的任務不需要警告
+      if (act.status === "done") return null;
+      
+      const today = dayjs();
+      const deadline = dayjs(act.date);
+      const daysUntil = deadline.diff(today, "day");
+
+      // 只對 deadline 類型 或狀態為 risk/blocked 的任務顯示警告
+      if (act.type === "deadline" || act.status === "risk" || act.status === "blocked") {
+        // 高風險：1週內（7天）- 紅色燃燒
+        if (daysUntil <= 7 && daysUntil >= 0) {
+          return "high";
+        }
+        // 已過期 - 也視為高風險
+        if (daysUntil < 0) {
+          return "overdue";
+        }
+      }
+
+      // 中風險：3天內或當週星期一開始 - 橘色
+      if (act.status === "risk") {
+        const mondayOfWeek = today.day(1); // 本週星期一
+        if (deadline.isBefore(mondayOfWeek.add(7, "day")) && deadline.isAfter(today.subtract(1, "day"))) {
+          return "medium";
+        }
+      }
+
+      return null;
     },
 
     getRiskScore(p) {
@@ -691,7 +729,27 @@ createApp({
       this.showToastMsg("已按時間重新排序任務");
     },
 
-    // --- 聯絯人操作 ---
+    // --- 拖曳排序 (Drag & Drop) ---
+    handleDragStart(index) {
+      this.dragIndex = index;
+    },
+
+    handleDragEnter(index) {
+      if (this.dragIndex === null || this.dragIndex === index) return;
+
+      // 執行陣列元素移動
+      const item = this.activeProject.activities.splice(this.dragIndex, 1)[0];
+      this.activeProject.activities.splice(index, 0, item);
+
+      // 更新當前索引，確保連續拖曳正確
+      this.dragIndex = index;
+    },
+
+    handleDragEnd() {
+      this.dragIndex = null;
+    },
+
+    // --- 聯絡人操作 ---
     addContact() {
       this.activeProject.contacts.push({ name: "", info: "" });
     },
