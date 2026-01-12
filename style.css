@@ -40,6 +40,80 @@ textarea:focus {
 }
 
 /* ============================================
+   Deadline 警告效果 - 炸彈引線風格
+   ============================================ */
+/* 高風險：引線燃燒效果 */
+.deadline-burning {
+    position: relative;
+}
+
+.deadline-burning::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: 100%;
+    width: 30px;
+    height: 2px;
+    background: linear-gradient(90deg, #333, #f97316, #ef4444);
+    transform: translateY(-50%) rotate(-45deg);
+    transform-origin: right center;
+    animation: fuse-burn 0.8s ease-in-out infinite;
+}
+
+.deadline-burning::after {
+    content: '💥';
+    position: absolute;
+    top: -8px;
+    right: calc(100% + 25px);
+    font-size: 10px;
+    animation: spark-flicker 0.3s ease-in-out infinite alternate;
+    filter: drop-shadow(0 0 3px #ff6b00);
+}
+
+@keyframes fuse-burn {
+    0%, 100% {
+        background: linear-gradient(90deg, #555, #f97316, #fbbf24);
+        box-shadow: 0 0 8px 2px rgba(251, 146, 60, 0.8);
+    }
+    50% {
+        background: linear-gradient(90deg, #333, #ef4444, #ff6b6b);
+        box-shadow: 0 0 12px 4px rgba(239, 68, 68, 0.9);
+    }
+}
+
+@keyframes spark-flicker {
+    0% {
+        opacity: 0.6;
+        transform: scale(0.8) rotate(-10deg);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1.2) rotate(10deg);
+    }
+}
+
+/* 中風險：橘色閃爍效果 */
+.deadline-warning {
+    animation: warning-pulse 1.2s ease-in-out infinite;
+    box-shadow: 0 0 8px 2px rgba(251, 146, 60, 0.5) !important;
+}
+
+@keyframes warning-pulse {
+    0%, 100% {
+        box-shadow: 0 0 5px 1px rgba(251, 146, 60, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 12px 4px rgba(251, 146, 60, 0.7);
+    }
+}
+
+/* 火焰圖示動畫 - 引線火花 */
+.flame-icon {
+    animation: flame-flicker 0.2s ease-in-out infinite alternate;
+    filter: drop-shadow(0 0 4px #ff6b00) drop-shadow(0 0 8px #ef4444);
+}
+
+/* ============================================
    CSS 變數定義
    ============================================ */
 :root {
@@ -100,12 +174,42 @@ body {
 }
 
 .hover-lift {
-    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease-out;
 }
 
 .hover-lift:hover {
-    transform: translateY(-4px) scale(1.01);
-    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.15);
+    transform: translateY(-6px) scale(1.02);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(99, 102, 241, 0.1);
+}
+
+.hover-lift:active {
+    transform: translateY(-2px) scale(0.99);
+    box-shadow: 0 10px 25px -8px rgba(0, 0, 0, 0.15);
+}
+
+/* 按鈕通用互動效果 */
+button, .btn-ripple {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+button:active:not(:disabled), .btn-ripple:active {
+    transform: scale(0.97);
+}
+
+/* 卡片進入動畫 */
+.card-enter {
+    animation: card-slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes card-slide-up {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .diamond {
@@ -185,6 +289,38 @@ body {
     .status-blocked {
         animation: pulse-red 1.5s infinite;
     }
+
+/* ============================================
+   拖曳視覺增強
+   ============================================ */
+.draggable-item {
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.draggable-item.dragging {
+    opacity: 0.6;
+    transform: scale(1.02) rotate(1deg);
+    box-shadow: 0 20px 40px -10px rgba(99, 102, 241, 0.3), 0 0 0 2px rgba(99, 102, 241, 0.5);
+    z-index: 100;
+}
+
+.draggable-item:not(.dragging):hover {
+    border-color: rgba(99, 102, 241, 0.3);
+}
+
+.drag-handle {
+    cursor: grab;
+    transition: all 0.2s;
+}
+
+.drag-handle:hover {
+    transform: scale(1.2);
+    color: #6366f1 !important;
+}
+
+.drag-handle:active {
+    cursor: grabbing;
+}
 
     /* ============================================
    列印樣式
@@ -332,24 +468,29 @@ body {
    ============================================ */
     @keyframes progress-shine {
         from {
-            left: -100%;
+            left: -150%;
         }
 
         to {
-            left: 100%;
+            left: 150%;
         }
     }
 
-    .progress-animated::after {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-        animation: progress-shine 2s infinite;
-    }
+.progress-animated {
+    position: relative;
+    overflow: hidden;
+}
+
+.progress-animated::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -150%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    animation: progress-shine 2.5s ease-in-out infinite;
+}
 
     /* ============================================
    輸入框焦點效果
