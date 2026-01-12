@@ -470,7 +470,9 @@ body {
         display: none;
     }
 
-    .sakura .sakura-container {
+    .sakura .sakura-container,
+    .forest .sakura-container,
+    .animal .sakura-container {
         display: block;
     }
 
