@@ -417,20 +417,56 @@ createApp({
       this.theme = t;
       localStorage.setItem("pm-theme", t);
       // 移除所有主題類別
-      document.documentElement.classList.remove("dark", "forest", "sakura");
+      document.documentElement.classList.remove("dark", "forest", "sakura", "animal");
       // 加入當前主題類別
       if (t !== "light") {
         document.documentElement.classList.add(t);
       }
-      // 如果是櫻花模式，觸發飄花效果
-      if (t === "sakura") {
-        this.$nextTick(() => {
-          this.createPetals();
-        });
-      } else {
-        // 清除花瓣
-        const container = document.getElementById("sakura-container");
-        if (container) container.innerHTML = "";
+      // 根據主題觸發對應粒子效果
+      this.$nextTick(() => {
+        this.updateParticles(t);
+      });
+    },
+
+    // --- 粒子效果更新 ---
+    updateParticles(theme) {
+      const container = document.getElementById("sakura-container");
+      if (!container) return;
+      container.innerHTML = "";
+
+      let emojis = [];
+      if (theme === "sakura") {
+        emojis = ["🌸", "💮", "🎀"];
+      } else if (theme === "forest") {
+        emojis = ["🌲", "🍂", "🍃", "🌿"];
+      } else if (theme === "animal") {
+        emojis = ["🐭", "🐮", "🐯", "🐰", "🐲", "🐍", "🐎", "🐑", "🦁", "🐔", "🐶", "🐷", "🦆", "🐒", "🦌"];
+      }
+
+      if (emojis.length === 0) return;
+
+      const particleCount = 25;
+      for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement("div");
+        particle.className = "particle";
+        particle.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+
+        const left = Math.random() * 100 + "%";
+        const delay = Math.random() * 10 + "s";
+        const duration = Math.random() * 15 + 10 + "s";
+        const size = Math.random() * 10 + 16 + "px";
+
+        particle.style.left = left;
+        particle.style.animationDelay = delay;
+        particle.style.animationDuration = duration;
+        particle.style.fontSize = size;
+        particle.style.position = "absolute";
+        particle.style.top = "-50px";
+        particle.style.opacity = "0.7";
+        particle.style.pointerEvents = "none";
+        particle.style.animation = `fall ${duration} linear ${delay} infinite`;
+
+        container.appendChild(particle);
       }
     },
 
@@ -986,18 +1022,16 @@ createApp({
       this.selectedPid = this.projects[0].id;
     }
 
-    // 初始化森林模式
-    if (this.theme === "forest") {
-      document.documentElement.classList.add("forest");
+    // 初始化主題類別
+    if (this.theme !== "light") {
+      document.documentElement.classList.add(this.theme);
     }
 
     // 註冊鍵盤事件監聽器
     document.addEventListener("keydown", this.handleKeyboard);
 
-    // 如果初始是櫻花模式，啟動花瓣
-    if (this.theme === "sakura") {
-      this.createPetals();
-    }
+    // 初始化主題粒子效果
+    this.updateParticles(this.theme);
 
     // 初始化字體大小
     document.documentElement.style.fontSize = this.fontSize + "px";
