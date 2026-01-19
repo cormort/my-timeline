@@ -1,5 +1,5 @@
 /**
- * 專案計畫管理平台 v2.1.4
+ * 專案計畫管理平台 v2.1.5
  * Vue.js 應用程式 - 完整整合無損版
  */
 
@@ -141,10 +141,15 @@ createApp({
       fontSize: parseInt(localStorage.getItem("pm-font-size")) || 16,
       tabs: [
         { id: "time", n: "年度全覽", icon: "fa-calendar-days" },
+        { id: "calendar", n: "日曆視圖", icon: "fa-calendar-alt" },
         { id: "project", n: "專案管理", icon: "fa-list-check" },
         { id: "report", n: "報告 & 儀表板", icon: "fa-chart-pie" },
         { id: "template", n: "範本管理", icon: "fa-copy" },
       ],
+      // Calendar State
+      calendarDate: dayjs(),
+      selectedDate: dayjs().format("YYYY-MM-DD"),
+      holidays: {},
     };
   },
 
@@ -259,6 +264,70 @@ createApp({
           ? "border-transparent opacity-70 hover:bg-white/80"
           : "border-transparent opacity-60 hover:bg-white hover:shadow-sm",
       };
+    },
+    // --- 日曆相關計算屬性 (Moved from methods) ---
+    calendarHeader() {
+      return this.calendarDate.format("YYYY 年 M 月");
+    },
+    calendarDays() {
+      const year = this.calendarDate.year();
+      const month = this.calendarDate.month(); // 0-11
+      const firstDayOfMonth = dayjs(new Date(year, month, 1));
+      const lastDayOfMonth = dayjs(new Date(year, month + 1, 0));
+      
+      const startDayOfWeek = firstDayOfMonth.day(); // 0 (Sun) - 6 (Sat)
+      
+      const days = [];
+      
+      const createDay = (d, currentMonth) => {
+        const dateStr = d.format('YYYY-MM-DD');
+        const holiday = this.holidays[dateStr];
+        return {
+          date: dateStr,
+          day: d.date(),
+          currentMonth,
+          isToday: dateStr === this.today,
+          holidayName: holiday?.isHoliday ? holiday.name : null,
+          isHoliday: holiday?.isHoliday
+        };
+      };
+      
+      // Previous month padding
+      const prevMonthLastDay = dayjs(new Date(year, month, 0));
+      for (let i = startDayOfWeek - 1; i >= 0; i--) {
+        days.push(createDay(prevMonthLastDay.subtract(i, 'day'), false));
+      }
+      
+      // Current month days
+      for (let i = 1; i <= lastDayOfMonth.date(); i++) {
+        days.push(createDay(firstDayOfMonth.date(i), true));
+      }
+      
+      // Next month padding to fill 42 cells (6 rows)
+      const remainingCells = 42 - days.length;
+      const nextMonthFirstDay = dayjs(new Date(year, month + 1, 1));
+      for (let i = 0; i < remainingCells; i++) {
+        days.push(createDay(nextMonthFirstDay.add(i, 'day'), false));
+      }
+      
+      return days;
+    },
+    calendarTasks() {
+      const taskMap = {};
+      this.activeProjects.forEach(p => {
+        p.activities.forEach(act => {
+          if (!taskMap[act.date]) taskMap[act.date] = [];
+          taskMap[act.date].push({
+            ...act,
+            projectName: p.name,
+            projectId: p.id
+          });
+        });
+      });
+      return taskMap;
+    },
+    selectedDayTasks() {
+      return this.calendarTasks[this.selectedDate] || [];
     },
   },
 
@@ -422,6 +491,8 @@ createApp({
       }[s];
     },
 
+
+
     getStatusDot(s) {
       return {
         pending: "bg-slate-400",
@@ -547,7 +618,7 @@ createApp({
       // Cmd/Ctrl + D: 切換深淺色主題 (依照順序循環)
       if ((e.metaKey || e.ctrlKey) && (e.key === "d" || e.key === "D")) {
         e.preventDefault();
-        const themes = ["light", "forest", "sakura"];
+        const themes = ["light", "forest", "sakura", "animal"];
         const nextIdx = (themes.indexOf(this.theme) + 1) % themes.length;
         this.setTheme(themes[nextIdx]);
       }
@@ -1041,6 +1112,34 @@ createApp({
       });
     },
 
+    // --- 日曆操作 ---
+    async fetchHolidays() {
+      try {
+        // 使用 GitHub CDN 抓取 2026 年台灣行事曆
+        const res = await fetch("https://cdn.jsdelivr.net/gh/ruyut/TaiwanCalendar/data/2026.json");
+        const data = await res.json();
+        // 格式處理： { date: "20260101", description: "...", isHoliday: true }
+        data.forEach(d => {
+           if (d.isHoliday) {
+             const y = d.date.substring(0, 4);
+             const m = d.date.substring(4, 6);
+             const day = d.date.substring(6, 8);
+             const dateStr = `${y}-${m}-${day}`;
+             this.holidays[dateStr] = { name: d.description, isHoliday: true };
+           }
+        });
+      } catch (e) {
+        console.error("Failed to fetch holidays:", e);
+      }
+    },
+
+    changeMonth(delta) {
+      this.calendarDate = this.calendarDate.add(delta, 'month');
+    },
+    selectDate(date) {
+      this.selectedDate = date;
+    },
+    
     // --- 櫻花特效邏輯 ---
     createPetals() {
       const container = document.getElementById("sakura-container");
@@ -1079,6 +1178,9 @@ createApp({
     if (this.projects.length) {
       this.selectedPid = this.projects[0].id;
     }
+
+    // 抓取假日資料
+    this.fetchHolidays();
 
     // 初始化主題類別
     if (this.theme !== "light") {

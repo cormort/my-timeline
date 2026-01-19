@@ -4,6 +4,15 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>專案計畫管理平台</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="專案計畫管理平台 - 專案組合管理系統 (PPM)，支援甘特圖、風險追蹤、多主題切換" />
+    <meta name="keywords" content="專案管理, 甘特圖, 里程碑, 風險管理, PPM, 專案計畫" />
+    <meta name="author" content="My Timeline" />
+    <meta property="og:title" content="專案計畫管理平台" />
+    <meta property="og:description" content="專案組合管理系統 PPM - 支援年度全覽甘特圖、專案管理、報告儀表板" />
+    <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#6366f1" />
 
     <!-- Vue 3 -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -135,7 +144,7 @@
               ✨ 專案計畫管理平台 💎
               <span
                 class="text-[10px] align-top bg-gradient-to-r from-indigo-500 to-purple-600 sakura:from-pink-400 sakura:to-rose-500 text-white px-2 py-0.5 rounded-full ml-1 font-bold"
-                >v2.1.4 🚀</span
+                >v2.1.5 🚀</span
               >
             </h1>
             <p class="text-sm opacity-50 font-bold flex items-center gap-2">
@@ -402,6 +411,117 @@
             </div>
           </div>
         </section>
+      </main>
+
+      <!-- TAB: 全域日曆視圖 -->
+      <main v-if="currentTab === 'calendar'" class="animate-fade-in">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <!-- 左側：月曆網格 -->
+          <div class="lg:col-span-8">
+            <section :class="[themeClasses.card, 'p-6 rounded-3xl shadow-xl border relative overflow-hidden']">
+              <!-- Header -->
+              <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-black text-slate-800 dark:text-white flex items-center gap-3">
+                  <span>{{ calendarHeader }}</span>
+                  <button @click="calendarDate = dayjs()" class="px-2 py-1 bg-slate-100 text-slate-500 text-xs rounded-lg hover:bg-slate-200 transition-colors">今天</button>
+                </h2>
+                <div class="flex gap-2">
+                  <button @click="changeMonth(-1)" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors">
+                    <i class="fa-solid fa-chevron-left text-sm text-slate-600"></i>
+                  </button>
+                  <button @click="changeMonth(1)" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors">
+                    <i class="fa-solid fa-chevron-right text-sm text-slate-600"></i>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Weekday Headers -->
+              <div class="grid grid-cols-7 mb-2 text-center">
+                <div v-for="day in ['日', '一', '二', '三', '四', '五', '六']" class="text-xs font-bold text-slate-400 py-2">
+                  {{ day }}
+                </div>
+              </div>
+
+              <!-- Calendar Grid -->
+              <div class="grid grid-cols-7 gap-2">
+                <div 
+                  v-for="(cell, idx) in calendarDays" 
+                  :key="idx"
+                  @click="selectDate(cell.date)"
+                  :class="[
+                    'min-h-[100px] rounded-xl p-2 border transition-all cursor-pointer relative hover:shadow-md group flex flex-col',
+                    cell.currentMonth ? 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700' : 'bg-slate-50 dark:bg-slate-900 border-transparent opacity-50',
+                    selectedDate === cell.date ? 'ring-2 ring-indigo-500 ring-offset-2' : '',
+                    cell.isToday ? 'bg-indigo-50/50 dark:bg-indigo-900/20' : ''
+                  ]"
+                >
+                  <div class="flex justify-between items-start mb-2">
+                    <span :class="['text-sm font-bold w-6 h-6 flex items-center justify-center rounded-full', cell.isToday ? 'bg-indigo-500 text-white' : (cell.isHoliday ? 'text-rose-500 font-black' : 'text-slate-700 dark:text-slate-300')]">
+                      {{ cell.day }}
+                    </span>
+                    <span v-if="cell.holidayName" class="text-[10px] transform scale-90 origin-right font-bold text-rose-500 bg-rose-50 dark:bg-rose-900/30 px-1.5 py-0.5 rounded whitespace-nowrap overflow-hidden max-w-[60px] text-ellipsis">
+                      {{ cell.holidayName }}
+                    </span>
+                  </div>
+                  
+                  <!-- Task Indicators -->
+                  <div class="space-y-1">
+                    <div 
+                      v-for="(task, tIdx) in calendarTasks[cell.date]" 
+                      :key="tIdx"
+                      v-if="tIdx < 3"
+                      class="flex items-center gap-1"
+                    >
+                      <div :class="['w-1.5 h-1.5 rounded-full shrink-0', getStatusDot(task.status)]"></div>
+                      <div class="text-[10px] text-slate-500 truncate font-medium">{{ task.name }}</div>
+                    </div>
+                    <div v-if="calendarTasks[cell.date]?.length > 3" class="text-[9px] text-slate-400 pl-2.5 font-bold">
+                      +{{ calendarTasks[cell.date].length - 3 }} 更多
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <!-- 右側：當日詳情 -->
+          <div class="lg:col-span-4">
+            <section :class="[themeClasses.card, 'p-6 rounded-3xl shadow-xl border h-full flex flex-col']">
+              <h3 class="font-black text-lg mb-4 flex items-center gap-2 border-b pb-4">
+                <i class="fa-solid fa-list-check text-indigo-500"></i>
+                {{ dayjs(selectedDate).format('M月D日 (ddd)') }} 任務
+                <span class="ml-auto bg-slate-100 text-slate-500 px-2 py-0.5 rounded-lg text-xs">{{ selectedDayTasks.length }}</span>
+              </h3>
+              
+              <div class="flex-1 overflow-y-auto custom-scroll pr-2 space-y-3">
+                <div v-if="selectedDayTasks.length === 0" class="text-center py-10 opacity-40">
+                  <i class="fa-solid fa-calendar-check text-4xl mb-2 text-slate-300"></i>
+                  <div class="text-sm font-bold">今日無任務</div>
+                </div>
+                
+                <div 
+                  v-for="task in selectedDayTasks" 
+                  :key="task.id"
+                  class="p-3 rounded-xl border border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 hover:shadow-md transition-all group"
+                >
+                  <div class="flex justify-between items-start mb-1">
+                    <div class="text-[10px] bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded text-slate-500 truncate max-w-[120px]">
+                      {{ task.projectName }}
+                    </div>
+                    <div :class="['text-[10px] font-black uppercase', getStatusTextColor(task.status)]">
+                      {{ statusText(task.status) }}
+                    </div>
+                  </div>
+                  <div class="font-bold text-sm mb-1 group-hover:text-indigo-600 transition-colors">{{ task.name }}</div>
+                  <div class="flex items-center gap-2 text-xs text-slate-400">
+                    <span v-if="task.owner"><i class="fa-solid fa-user text-[10px]"></i> {{ task.owner }}</span>
+                    <span v-if="task.type === 'deadline'" class="text-rose-400"><i class="fa-solid fa-flag"></i> 里程碑</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
       </main>
 
       <!-- TAB 2: 專案管理 -->

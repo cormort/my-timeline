@@ -1,5 +1,5 @@
 /**
- * 專案計畫管理平台 v2.1.4
+ * 專案計畫管理平台 v2.1.5
  * 樣式表 - 完整整合無損版
  */
 
@@ -750,3 +750,76 @@ button:active:not(:disabled), .btn-ripple:active {
         border: 1px solid var(--glass-border);
         box-shadow: var(--glass-shadow);
     }
+
+/* ============================================
+   UI/UX Enhancements (2025 Standards)
+   ============================================ */
+
+/* Z-Index Scale System - Systematic layering */
+:root {
+    --z-base: 1;
+    --z-dropdown: 10;
+    --z-sticky: 20;
+    --z-fixed: 30;
+    --z-modal-backdrop: 40;
+    --z-modal: 50;
+    --z-tooltip: 60;
+    --z-toast: 99;
+}
+
+/* Cursor Pointer for Interactive Elements */
+[tabindex="0"],
+.draggable-item,
+button:not(:disabled),
+label.cursor-pointer,
+.hover-lift {
+    cursor: pointer;
+}
+
+/* Light Mode Glass Contrast Enhancement */
+.glass {
+    background: rgba(255, 255, 255, 0.85);
+}
+
+/* Particle Animation Performance */
+.petal,
+.particle {
+    will-change: transform, opacity;
+}
+
+/* ============================================
+   Accessibility: Reduced Motion Support
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+
+    .petal,
+    .particle {
+        display: none !important;
+    }
+
+    .logo-animated,
+    .progress-animated,
+    .today-line,
+    .deadline-burning,
+    .deadline-warning,
+    .flame-icon,
+    .status-blocked {
+        animation: none !important;
+    }
+}
+
+/* ============================================
+   Calendar Specific Styles
+   ============================================ */
+.grid-cols-7 {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+}
